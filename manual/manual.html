@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>GLAPP – User Manual</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=block">
+<link rel="stylesheet" href="manual.css">
+<style>@page { @bottom-left { content: "GLAPP · USER MANUAL"; } }</style>
+</head>
+<body>
+
+<section class="cover">
+  <div class="stripe"></div>
+  <div class="kicker">MASKINHALLEN · USER MANUAL · VERSION 1.0</div>
+  <h1>GLAPP</h1>
+  <div class="what">MICRO-DISPLACED MIDI ENGINE · DRAG · INERTIA · PHASE DRIFT</div>
+  <p class="tag">GLAPP is the slack in a worn machine, where the gears never quite mesh. It makes no sound of its own. It decides when your drums hit, and it lets them hit slightly wrong, on purpose. The kick stands still. Everything else slides.</p>
+  <div class="foot">
+    <div>VST3 · AU · STANDALONE<br>MACOS · WINDOWS (VST3)</div>
+    <b>MASKIN<span>HALLEN</span></b>
+  </div>
+</section>
+
+<h2 class="page">Contents</h2>
+<ol class="toc">
+  <li><span>01</span>Welcome</li>
+  <li><span>02</span>Install and connect</li>
+  <li><span>03</span>Your first minute</li>
+  <li><span>04</span>The eight lanes</li>
+  <li><span>05</span>Time: DRAG, INERTIA, JITTER</li>
+  <li><span>06</span>Movement: ORBIT and EVENTS</li>
+  <li><span>07</span>INTERLOCK</li>
+  <li><span>08</span>The dice, styles and presets</li>
+  <li><span>09</span>Troubleshooting</li>
+</ol>
+
+<h2><span class="n">01</span>Welcome</h2>
+<p class="lead">Most groove generators randomise <em>which</em> notes play. GLAPP decides <em>when</em> they land.</p>
+<p>The feel of Romanian minimal and the Berlin minimal school lives in milliseconds: a rim that hangs 20 ms behind the beat, a percussion loop of 13 steps that never lines up with the bar, a ghost note that only exists because two sounds wanted the same spot. GLAPP is built for exactly that. It sends MIDI to BETONG, a drum machine, a sampler or a synth, and every note is placed with sample accuracy.</p>
+<ul>
+  <li><strong>Eight polyrhythmic lanes</strong>, each with its own length (1 to 32 steps) and clock (1/4 to 1/32, including triplets).</li>
+  <li><strong>DRAG, INERTIA and JITTER</strong> per lane: late, sticky and human.</li>
+  <li><strong>ORBIT</strong> makes lanes wander over time, so nothing loops exactly the same.</li>
+  <li><strong>EVENTS</strong> on the last beat of each phrase: silence, a hiccup, a ratchet or a skipped beat.</li>
+  <li><strong>INTERLOCK</strong> stops two hits fighting for the same spot.</li>
+  <li><strong>The dice</strong> follows the rules of a style. It never spits out chaos.</li>
+  <li><strong>200 presets</strong> in four styles.</li>
+</ul>
+
+<div class="box">
+  <b class="h">About the Swedish labels</b>
+  <table>
+    <thead><tr><th>On screen</th><th>English</th><th>On screen</th><th>English</th></tr></thead>
+    <tbody>
+      <tr><td><span class="k">Längd</span></td><td>Length (steps)</td><td><span class="k">Takt</span></td><td>Clock / step size</td></tr>
+      <tr><td><span class="k">Tröghet</span></td><td>Inertia</td><td><span class="k">Släp</span></td><td>Drag amount (global)</td></tr>
+      <tr><td><span class="k">Frys</span></td><td>Freeze</td><td><span class="k">Tyst</span></td><td>Mute</td></tr>
+      <tr><td><span class="k">Händelse</span></td><td>Event</td><td><span class="k">Fras</span></td><td>Phrase length</td></tr>
+      <tr><td><span class="k">Nivå</span></td><td>Level (velocity)</td><td><span class="k">Chans</span></td><td>Chance</td></tr>
+      <tr><td><span class="k">Notlängd</span></td><td>Note length (gate)</td><td><span class="k">Kanal</span></td><td>MIDI channel</td></tr>
+      <tr><td><span class="k">Spöke</span></td><td>Ghost (note)</td><td><span class="k">Flytta</span></td><td>Move</td></tr>
+      <tr><td><span class="k">Ångra</span></td><td>Undo</td><td><span class="k">Rensa</span></td><td>Clear</td></tr>
+      <tr><td><span class="k">Verkstad</span></td><td>Workshop (lane details)</td><td><span class="k">Urverket</span></td><td>The clockwork</td></tr>
+      <tr><td><span class="k">Följ tempo</span></td><td>Follow tempo</td><td><span class="k">Provljud</span></td><td>Test sounds</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="page"><span class="n">02</span>Install and connect</h2>
+<p><strong>macOS:</strong> unzip <span class="k">GLAPP-macOS.zip</span> from your Downloads folder, open Terminal and run:</p>
+<pre>bash ~/Downloads/GLAPP/installera.command</pre>
+<p>Quit your DAW completely and start it again. GLAPP shows up among the <strong>instruments</strong>. Requires macOS 11 or newer, Intel or Apple Silicon.</p>
+<p><strong>Windows:</strong> unzip <span class="k">GLAPP-Windows.zip</span> and copy <span class="k">GLAPP.vst3</span> to <span class="k">C:\Program Files\Common Files\VST3</span>.</p>
+
+<h3>Connecting GLAPP to a sound</h3>
+<p>GLAPP is an instrument that outputs MIDI. By default lane 1 to 8 play C1 to G1 (notes 36 to 43) on channel 1, which are pads 1 to 8 in BETONG.</p>
+<ol class="steps">
+  <li><strong>Bitwig:</strong> put GLAPP on an instrument track and BETONG (or any drum machine) right after it in the same device chain. Bitwig passes GLAPP's notes on to the next device.</li>
+  <li>If your Bitwig version does not pass the notes on: put BETONG on its own track and choose GLAPP's track as its note input (or use a Note Receiver device).</li>
+  <li><strong>Ableton Live:</strong> put GLAPP on a MIDI track. On a second MIDI track with your drums, set "MIDI From" to the GLAPP track and choose GLAPP in the lower box. Arm the second track or set monitoring to In.</li>
+  <li><strong>Logic:</strong> use the AU version and route its MIDI output with the environment, or use the VST3 in another host.</li>
+</ol>
+<p>Want to hear GLAPP on its own? Press <span class="k">PROVLJUD</span>. A tiny built-in drum kit plays along. Turn it off when the real sounds take over.</p>
+
+<h2 class="page"><span class="n">03</span>Your first minute</h2>
+<ol class="steps">
+  <li>Press play in your DAW. GLAPP follows the DAW's tempo and play/stop. No DAW running? Press <span class="k">SPELA</span> to use GLAPP's own clock and <span class="k">TEMPO</span> knob.</li>
+  <li>Step through presets with the arrows, or click the name to pick from all 200.</li>
+  <li>Pick a <span class="k">STIL</span> and hit <span class="k">DICE · MUTERA</span> until something grabs you.</li>
+  <li><span class="k">FRYS</span> the lanes you love. Roll again: only the others change.</li>
+  <li>Press <span class="k">ORBIT EVOLVE</span> to keep the pattern but change how it moves over time.</li>
+  <li>Went too far? <span class="k">ÅNGRA</span> goes back, up to 40 steps.</li>
+</ol>
+
+<h2 class="page"><span class="n">04</span>The eight lanes</h2>
+<p>Each lane has a role. The role decides how the dice treats it, and the order decides who wins in INTERLOCK (higher up wins).</p>
+<table>
+  <thead><tr><th>Lane</th><th>Role</th><th>Default</th></tr></thead>
+  <tbody>
+    <tr><td><span class="k">KICK</span></td><td>The anchor. The dice never drags it, interlock never moves it.</td><td>C1 (36)</td></tr>
+    <tr><td><span class="k">RIM</span></td><td>Backbeat in the pocket, 14 to 32 ms late.</td><td>C#1 (37)</td></tr>
+    <tr><td><span class="k">HAT</span></td><td>Offbeats or odd euclidean cycles.</td><td>D1 (38)</td></tr>
+    <tr><td><span class="k">PERK 1, PERK 2</span></td><td>Odd lengths (11, 13, 15, 17, 23) that drift against the bar.</td><td>D#1, E1</td></tr>
+    <tr><td><span class="k">KLICK</span></td><td>Tiny clicks, often 1/32, often gliding.</td><td>F1 (41)</td></tr>
+    <tr><td><span class="k">BAS</span></td><td>Short offbeat stabs with pitch steps.</td><td>F#1 (42)</td></tr>
+    <tr><td><span class="k">ACKORD</span></td><td>Chord stabs (set a chord type in the workshop). Best sent to a synth.</td><td>G1 (43)</td></tr>
+  </tbody>
+</table>
+
+<h3>The step grid</h3>
+<p><strong>Click</strong> a step to turn it on or off. <strong>Drag</strong> up or down for velocity. <strong>Scroll</strong> over a step to change its pitch in semitones (shown on the bar). <strong>Shift-click</strong> makes a ghost note. <strong>Right-click</strong> clears the step. The thin white tick on each hit shows where it really lands after drag and inertia.</p>
+<p>On each lane: <span class="k">LÄNGD</span>, <span class="k">DRAG</span>, <span class="k">TRÖGHET</span>, <span class="k">JITTER</span>, <span class="k">FRYS</span>, <span class="k">TYST</span> and a dice for that lane only. Click a lane's name to open it in the <span class="k">VERKSTAD</span> below, which holds clock, note, channel, level, chance, note length, orbit, events and chord.</p>
+
+<h3>URVERKET</h3>
+<p>The clockwork on the right shows every lane as a ring, the kick innermost. Hits are dots, nudged by their drag. Each lane has its own play head going round at its own speed, so you can literally watch the lanes slide apart and meet again.</p>
+
+<h2 class="page"><span class="n">05</span>Time: DRAG, INERTIA, JITTER</h2>
+<p><span class="k">DRAG</span> (0 to 60 ms) makes a lane hit late. Late, never early: a note cannot be sent before it happens, and the pocket is behind the beat anyway.</p>
+<p><span class="k">TRÖGHET</span> (inertia) adds delay when hits come in a row: the second hit gets +12 ms, the third +24, the fourth +38. Fast runs sound like they slip on an oil stain.</p>
+<p><span class="k">JITTER</span> (0 to 5 ms) adds a little human randomness. It is the same every time the song passes that spot, so exports and loops stay stable.</p>
+<p>In <span class="k">GROOVE</span>: <span class="k">SLÄP</span> scales all drag on all lanes (0 % is dead straight, 200 % is very loose). <span class="k">HUMAN</span> scales all jitter. <span class="k">FÖLJ TEMPO</span>: drag is set for 122 BPM and follows the tempo, so the feel stays the same at 118 or 128. Turn it off for fixed milliseconds.</p>
+
+<h2 class="page"><span class="n">06</span>Movement: ORBIT and EVENTS</h2>
+<p><span class="k">ORBIT</span> makes a lane move over time:</p>
+<ul>
+  <li><strong>STEG +</strong> turns the pattern one step later every N bars. <strong>STEG −</strong> one step earlier.</li>
+  <li><strong>GLID</strong> lets the drag breathe: 0, 3, 6, 9, 12 ms and back again, one notch every N bars.</li>
+</ul>
+<p><span class="k">HÄNDELSE</span> (event) happens on the last beat of each phrase (<span class="k">FRAS</span> = 2, 4, 8 or 16 bars):</p>
+<ul>
+  <li><strong>TYST</strong> silences the lane for the whole last bar.</li>
+  <li><strong>HICKA</strong> throws the last beat's hits 45 ms late: the hiccup that makes the floor lose its jaw.</li>
+  <li><strong>RATCHET</strong> turns those hits into fast triple strikes.</li>
+  <li><strong>HOPP</strong> skips the last beat, a small hole before the one.</li>
+</ul>
+
+<h2 class="page"><span class="n">07</span>INTERLOCK</h2>
+<p>With <span class="k">INTERLOCK</span> on, two lanes never hit at exactly the same moment. The lane higher up wins and the kick always wins. What happens to the loser is set in <span class="k">INTERLOCK LÄGE</span>:</p>
+<ul>
+  <li><strong>SPÖKE</strong>: it plays as a ghost note, velocity 18 to 35.</li>
+  <li><strong>FLYTTA</strong>: it is pushed to a late 32nd after the beat.</li>
+  <li><strong>TYST</strong>: it is dropped.</li>
+</ul>
+
+<h2 class="page"><span class="n">08</span>The dice, styles and presets</h2>
+<p>Every dice in GLAPP works within the rules of the chosen <span class="k">STIL</span>. It never touches <span class="k">NOT</span> or <span class="k">KANAL</span>, because those are your connection to the drums.</p>
+<table>
+  <thead><tr><th>Style</th><th>Character</th></tr></thead>
+  <tbody>
+    <tr><td><span class="k">BUKAREST</span></td><td>Rolling, woody, very late ghost notes, 15- and 23-step percussion cycles. Sometimes the chord lane stays silent on purpose.</td></tr>
+    <tr><td><span class="k">BERLIN</span></td><td>Crooked clicks, endless phase drift, odd hat cycles, triplet percussion, tighter drag.</td></tr>
+    <tr><td><span class="k">MIKRODUB</span></td><td>Sloppy backbeats, sparse 13-step accents, dub chords, extra drag.</td></tr>
+    <tr><td><span class="k">ORGANISK</span></td><td>Wooden clappers, euclidean kicks now and then, stumbling micro-grooves.</td></tr>
+  </tbody>
+</table>
+<p>Density is always low: percussion lanes get 2 to 5 hits per 16 steps. Minimal is built on silence.</p>
+<p><strong>Presets:</strong> 200, fifty per style. Each preset is a fixed seed for the dice, so it always comes back the same. Frozen lanes are left alone when you change preset, so you can keep your kick and rim and browse the rest.</p>
+
+<h2 class="page"><span class="n">09</span>Troubleshooting</h2>
+<ul>
+  <li><strong>Nothing happens:</strong> is the DAW playing? Without a DAW, press <span class="k">SPELA</span>. Turn on <span class="k">PROVLJUD</span> to check that GLAPP itself is running.</li>
+  <li><strong>The drums get no notes:</strong> see "Connecting GLAPP to a sound" in chapter 02. Check that <span class="k">NOT</span> and <span class="k">KANAL</span> match your drum machine.</li>
+  <li><strong>macOS says the plugin is damaged:</strong> run <span class="k">installera.command</span> again. It removes the quarantine flag.</li>
+  <li><strong>It sounds too loose:</strong> turn <span class="k">SLÄP</span> down, or freeze what works and roll the rest.</li>
+</ul>
+
+</body>
+</html>

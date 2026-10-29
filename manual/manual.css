@@ -1,0 +1,118 @@
+/* MASKINHALLEN manual. Renderas till PDF av Chrome i GitHub Actions. */
+:root {
+  --ground: #121314;
+  --raised: #232527;
+  --sodium: #ff8a1f;
+  --sodium-dk: #c96a16;
+  --cold: #2ea7b5;
+  --ink: #1b1c1d;
+  --mute: #6b6e71;
+  --rule: #d9d6cf;
+  --paper: #ffffff;
+  --tint: #f4f2ee;
+  --disp: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+  --body: "Inter", "Helvetica Neue", Arial, sans-serif;
+  --mono: "JetBrains Mono", Menlo, Consolas, monospace;
+}
+
+@page {
+  size: A4;
+  margin: 18mm 18mm 20mm 18mm;
+  @bottom-left { content: "MASKINHALLEN · USER MANUAL"; font: 7.5pt var(--mono); color: #8b8e91; letter-spacing: .12em; }
+  @bottom-right { content: counter(page); font: 7.5pt var(--mono); color: #8b8e91; }
+}
+@page cover { margin: 0; @bottom-left { content: none; } @bottom-right { content: none; } }
+
+* { box-sizing: border-box; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { margin: 0; font: 10pt/1.55 var(--body); color: var(--ink); background: var(--paper); }
+
+/* Omslag */
+.cover {
+  page: cover; height: 297mm; width: 210mm; background: var(--ground); color: #d9d6cf;
+  padding: 26mm 20mm 22mm; display: flex; flex-direction: column; position: relative; overflow: hidden;
+}
+.cover .stripe {
+  position: absolute; left: 0; right: 0; top: 0; height: 9mm;
+  background: repeating-linear-gradient(-45deg, var(--sodium) 0 9mm, var(--ground) 9mm 18mm);
+}
+.cover .kicker { font: 600 9pt var(--mono); letter-spacing: .22em; color: #8b8e91; margin-top: 16mm; }
+.cover h1 {
+  font: 900 118pt/0.86 var(--disp); color: var(--sodium); margin: 6mm 0 0; letter-spacing: .005em;
+}
+.cover .what { font: 600 13pt var(--mono); color: #d9d6cf; margin-top: 7mm; letter-spacing: .04em; }
+.cover .tag { font-size: 12pt; line-height: 1.5; max-width: 125mm; color: #b9b6af; margin-top: 10mm; }
+.cover .foot { margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end;
+  font: 600 8.5pt var(--mono); letter-spacing: .16em; color: #8b8e91; border-top: 1px solid #34383b; padding-top: 5mm; }
+.cover .foot b { font: 900 22pt var(--disp); letter-spacing: .02em; color: #d9d6cf; }
+.cover .foot b span { color: var(--sodium); }
+
+/* Rubriker */
+h2 {
+  font: 900 30pt/1 var(--disp); margin: 11mm 0 4mm; padding-top: 5mm; border-top: .6mm solid var(--ink);
+  letter-spacing: .01em; text-transform: uppercase; break-after: avoid;
+}
+h2.page { break-before: page; margin-top: 0; padding-top: 0; border-top: 0; }
+h2 .n { color: var(--sodium); margin-right: 3mm; }
+h3 { font: 800 15pt/1.15 var(--disp); text-transform: uppercase; letter-spacing: .03em; margin: 7mm 0 2mm; break-after: avoid; }
+h3::before { content: ""; display: inline-block; width: 3mm; height: 3mm; background: var(--sodium); margin-right: 2.5mm; vertical-align: .5mm; }
+h2 + h3 { margin-top: 3mm; }
+p { margin: 0 0 2.6mm; }
+.lead { font-size: 11.5pt; line-height: 1.5; color: #3a3c3e; max-width: 160mm; }
+ul, ol { margin: 0 0 3mm; padding-left: 5.5mm; }
+li { margin-bottom: 1.2mm; }
+li::marker { color: var(--sodium-dk); }
+strong { font-weight: 700; }
+a { color: var(--sodium-dk); text-decoration: none; }
+
+/* Knappar och etiketter som de står i pluginet */
+.k {
+  font: 600 8.3pt var(--mono); letter-spacing: .03em; white-space: nowrap;
+  background: var(--raised); color: #f0ede6; border-radius: 1.2mm; padding: .35mm 1.6mm; border-bottom: .5mm solid #000;
+}
+.k.o { background: var(--sodium); color: var(--ground); border-bottom-color: var(--sodium-dk); }
+.tr { color: var(--mute); font-style: italic; }
+kbd { font: 600 8.3pt var(--mono); border: .3mm solid #b9b6af; border-bottom-width: .7mm; border-radius: 1mm; padding: 0 1.3mm; background: var(--tint); }
+
+/* Tabeller */
+table { width: 100%; border-collapse: collapse; margin: 1mm 0 4mm; font-size: 9.2pt; break-inside: auto; }
+thead { display: table-header-group; }
+tr { break-inside: avoid; }
+th { text-align: left; font: 600 7.5pt var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--mute);
+  border-bottom: .5mm solid var(--ink); padding: 1.5mm 2mm; }
+td { border-bottom: .25mm solid var(--rule); padding: 1.8mm 2mm; vertical-align: top; }
+td:first-child { white-space: nowrap; width: 1%; }
+td.r { white-space: nowrap; color: var(--mute); font: 8.3pt var(--mono); width: 1%; }
+
+/* Rutor */
+.box { background: var(--tint); border-left: 1.2mm solid var(--sodium); padding: 3mm 4mm; margin: 3mm 0 4mm; break-inside: avoid; }
+.box.cold { border-left-color: var(--cold); }
+.box.cold:has(+ .end) { break-after: avoid; }
+.box b.h { display: block; font: 600 7.5pt var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--mute); margin-bottom: 1mm; }
+.box p:last-child, .box ol:last-child, .box ul:last-child { margin-bottom: 0; }
+
+.steps { counter-reset: s; list-style: none; padding: 0; }
+.steps > li { counter-increment: s; position: relative; padding-left: 10mm; margin-bottom: 2.6mm; break-inside: avoid; }
+.steps > li::before {
+  content: counter(s); position: absolute; left: 0; top: -.3mm; width: 6.5mm; height: 6.5mm; border-radius: 50%;
+  background: var(--ground); color: var(--sodium); font: 800 10pt/6.5mm var(--disp); text-align: center;
+}
+
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; }
+.two > div { break-inside: avoid; }
+
+/* Karta över fönstret */
+.map { display: grid; gap: 1.5mm; margin: 3mm 0 5mm; font: 600 7.4pt var(--mono); letter-spacing: .08em; break-inside: avoid; }
+.map div { background: var(--ground); color: #d9d6cf; border-radius: 1.2mm; padding: 2.4mm 2.6mm; position: relative; }
+.map div i { font-style: normal; color: var(--sodium); font: 900 12pt var(--disp); margin-right: 1.8mm; }
+.map div small { display: block; color: #8b8e91; font-weight: 400; letter-spacing: .02em; margin-top: .8mm; }
+
+.toc { list-style: none; padding: 0; margin: 4mm 0 0; columns: 2; column-gap: 10mm; }
+.toc li { font: 600 9pt var(--mono); padding: 1.4mm 0; border-bottom: .25mm solid var(--rule); break-inside: avoid; }
+.toc li span { color: var(--sodium-dk); display: inline-block; width: 8mm; }
+
+.end { break-before: avoid; margin-top: 6mm; text-align: center; font: 900 20pt var(--disp); letter-spacing: .03em; }
+.end span { color: var(--sodium); }
+.small { font-size: 8.6pt; color: var(--mute); }
+
+pre { font-family: "JetBrains Mono", monospace; font-size: 10pt; background: #191b1e; color: #e8c25a; padding: 8px 12px; border-radius: 6px; }

@@ -1,0 +1,135 @@
+name: Bygg GLAPP
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write # behövs för att skapa releaser
+
+jobs:
+  # Manualen görs till PDF av Chrome och läggs i zipparna.
+  manual:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Gör PDF-manualen
+        run: |
+          mkdir -p dist
+          google-chrome --headless=new --no-sandbox --disable-gpu --no-pdf-header-footer \
+            --virtual-time-budget=20000 --run-all-compositor-stages-before-draw \
+            --print-to-pdf="$PWD/dist/GLAPP-Manual.pdf" "file://$PWD/manual/manual.html"
+          test -s dist/GLAPP-Manual.pdf
+
+      - name: Testa motorn
+        run: |
+          g++ -std=c++17 -O2 -Isrc tests/engine_test.cpp -o engine_test
+          ./engine_test
+
+      - name: Ladda upp
+        uses: actions/upload-artifact@v4
+        with:
+          name: GLAPP-Manual
+          path: dist/GLAPP-Manual.pdf
+
+  macos:
+    needs: manual
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Konfigurera
+        run: >
+          cmake -B build
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64"
+          -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0
+
+      - name: Bygg
+        run: cmake --build build --config Release -j 3
+
+      - name: Hämta manualen
+        uses: actions/download-artifact@v4
+        with:
+          name: GLAPP-Manual
+          path: dist/GLAPP
+
+      - name: Paketera
+        run: |
+          ART=build/Glapp_artefacts/Release
+          mkdir -p dist/GLAPP
+          cp -R "$ART/VST3/GLAPP.vst3" dist/GLAPP/
+          cp -R "$ART/AU/GLAPP.component" dist/GLAPP/
+          cp -R "$ART/Standalone/GLAPP.app" dist/GLAPP/
+          cp scripts/installera.command dist/GLAPP/
+          chmod +x dist/GLAPP/installera.command
+          for b in dist/GLAPP/GLAPP.vst3 dist/GLAPP/GLAPP.component dist/GLAPP/GLAPP.app; do
+            codesign --force --deep --sign - "$b"
+          done
+          cd dist && ditto -c -k --keepParent GLAPP GLAPP-macOS.zip
+
+      - name: Ladda upp
+        uses: actions/upload-artifact@v4
+        with:
+          name: GLAPP-macOS
+          path: dist/GLAPP-macOS.zip
+
+  windows:
+    needs: manual
+    runs-on: windows-2022
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Konfigurera
+        run: cmake -B build -G "Visual Studio 17 2022" -A x64
+
+      - name: Bygg
+        run: cmake --build build --config Release --target Glapp_VST3 -j 3
+
+      - name: Hämta manualen
+        uses: actions/download-artifact@v4
+        with:
+          name: GLAPP-Manual
+          path: dist/GLAPP
+
+      - name: Paketera
+        shell: pwsh
+        run: |
+          Copy-Item -Recurse "build/Glapp_artefacts/Release/VST3/GLAPP.vst3" "dist/GLAPP/"
+          Compress-Archive -Path "dist/GLAPP" -DestinationPath "dist/GLAPP-Windows.zip"
+
+      - name: Ladda upp
+        uses: actions/upload-artifact@v4
+        with:
+          name: GLAPP-Windows
+          path: dist/GLAPP-Windows.zip
+
+  # Varje bygge på main blir en release, så att
+  # .../releases/latest/download/GLAPP-macOS.zip alltid ger senaste versionen.
+  release:
+    if: always() && github.event_name == 'push' && needs.macos.result == 'success'
+    needs: [manual, macos, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Skapa release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('glapp-bygge-{0}', github.run_number) }}
+          name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('GLAPP bygge {0}', github.run_number) }}
+          target_commitish: ${{ github.sha }}
+          make_latest: true
+          body: "Mac: ladda ner GLAPP-macOS.zip och installera enligt README. Windows: GLAPP-Windows.zip (VST3). Manualen ligger i zipparna och som PDF här."
+          files: |
+            dist/GLAPP-macOS.zip
+            dist/GLAPP-Windows.zip
+            dist/GLAPP-Manual.pdf
