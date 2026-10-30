@@ -15,6 +15,8 @@ Andra groove-generatorer slumpar *vilka* noter som spelas. GLAPP bestämmer *nä
 - **FÖLJ TEMPO:** ms × 122 / BPM.
 - **ORBIT STEG ±:** mönstrets index = (steg ∓ antal passerade perioder) mod längd. **GLID:** triangelvåg 0–12 ms i steg om 3 ms per period.
 - **HÄNDELSE:** sista takten i varje fras; påverkar slag i sista slaget (TYST hela takten).
+- **TOMRUM:** stryker slag deterministiskt (hash, salt 7). Sannolikhet = TOMRUM × rollvikt × 0,8 (KICK 0, RIM 0,35, HAT 1, PERK 0,8, KLICK 0,9, BAS 0,45, ACKORD 0,6). Spöknoter (vel < 60) × 1,35, slag på fjärdedel × 0,5, tak 92 %.
+- **STUDS:** händelse som ger 5 slag på 0 / 0,62 / 1,0 / 1,24 / 1,39 steg, velocity 100/72/52/37/26 %.
 - **INTERLOCK:** jämför spårets nominella tid mot alla spår med lägre nummer. Kicken påverkas aldrig.
 - **Noter:** note on + note off efter NOTLÄNGD × steg. Samma ton som redan ljuder släpps först. Stopp och hopp släpper allt.
 
@@ -35,7 +37,7 @@ Tärningen rör aldrig NOT, KANAL, TYST eller NIVÅ.
 
 ## Presets
 
-200 = 4 stilar × 50. Varje preset är ett fast frö till tärningen (`presetSeed`). Frysta spår lämnas i fred.
+350 = 7 stilar × 50 (0–199 samma som v1). Varje preset är ett fast frö till tärningen (`presetSeed`). Frysta spår lämnas i fred.
 
 ## Filer
 

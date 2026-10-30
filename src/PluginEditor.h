@@ -43,7 +43,7 @@ private:
 
     // höger: urverket och groove
     std::unique_ptr<Urverket> urverk;
-    Knob slap, human, provNiva;
+    Knob slap, human, tomrum, provNiva;
     ParamToggle folj { juce::String::fromUTF8 ("FÖLJ TEMPO") }, interlock { "INTERLOCK" };
     ParamCombo ilMode;
 

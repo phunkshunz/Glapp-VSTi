@@ -68,7 +68,7 @@ private:
         std::atomic<float>* p[17] {};
     };
     std::array<RawTrack, gl::NT> raw;
-    std::atomic<float> *pSlap, *pHuman, *pFolj, *pIl, *pIlMode, *pProv, *pProvNiva, *pSpela, *pTempo;
+    std::atomic<float> *pSlap, *pHuman, *pTomrum, *pFolj, *pIl, *pIlMode, *pProv, *pProvNiva, *pSpela, *pTempo;
     std::atomic<uint32_t> seed { 1 };
 
     gl::Engine engine;

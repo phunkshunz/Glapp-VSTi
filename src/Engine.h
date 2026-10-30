@@ -83,6 +83,7 @@ public:
         st = pat->get (t, stepIndex (t, n));
         if (st.vel <= 0) return false;
         if (c.chance < 0.999f && hash01 (g.seed, t, n, 1) >= (double) c.chance) return false;
+        if (g.tomrum > 0.001f && tomrumGone (t, n, st)) return false;
         if (isEventBar (t, barOf (ppq)))
         {
             if (c.event == ETyst) return false;
@@ -90,6 +91,30 @@ public:
         }
         return true;
     }
+
+    // TOMRUM: stryker slag efter roll. Spöknoter försvinner först, slag på
+    // fjärdedelarna hänger kvar längst. Samma slag försvinner alltid på samma
+    // ställe (hash), så tomrummet blir ett mönster, inte brus.
+    bool tomrumGone (int t, int64_t n, const Step& st) const
+    {
+        const auto& c = tr[(size_t) t];
+        double p = (double) g.tomrum * tomrumWeight (c.role) * 0.8;
+        if (p <= 0.0) return false;
+        if (st.vel < 60) p *= 1.35;
+        const double stepPpq = divPpq (c.div);
+        const double ppq = (double) n * stepPpq;
+        if (std::abs (ppq - std::round (ppq)) < 1e-6) p *= 0.5;   // på slaget
+        return hash01 (g.seed, t, n, 7) < std::min (0.92, p);
+    }
+
+    // STUDS: en skiftnyckel som studsar nerför en trappa. Varje studs kortare och svagare.
+    static int studsCount() { return 5; }
+    static double studsPos (int r)   // i steg efter första slaget
+    {
+        static const double v[] = { 0.0, 0.62, 1.0, 1.24, 1.39 };
+        return v[clampv (r, 0, 4)];
+    }
+    static double studsVel (int r) { static const double v[] = { 1.0, 0.72, 0.52, 0.37, 0.26 }; return v[clampv (r, 0, 4)]; }
 
     // TRÖGHET: hur många träffar i rad som kom precis före det här steget.
     int runBefore (int t, int64_t n) const
@@ -154,20 +179,32 @@ public:
         vel = clampv (vel, 1, 127);
 
         const double gate = std::max (0.01, (double) c.gate * step);
-        const int reps = (evBeat && c.event == ERatchet) ? 3 : 1;
+        const bool studs = evBeat && c.event == EStuds;
+        const int reps = (evBeat && c.event == ERatchet) ? 3 : (studs ? studsCount() : 1);
         const auto iv = chordIntervals (c.chord);
         for (int r = 0; r < reps; ++r)
         {
-            const double p = nom + off + (double) r * step / 3.0;
-            const int v = r == 0 ? vel : std::max (1, (int) ((double) vel * (r == 1 ? 0.7 : 0.5)));
-            const double gg = reps > 1 ? std::min (gate, step / 3.0 * 0.8) : gate;
+            double p, gg;
+            int v;
+            if (studs)
+            {
+                p = nom + off + studsPos (r) * step;
+                v = std::max (1, (int) std::lround ((double) vel * studsVel (r)));
+                gg = std::min (gate, step * 0.2);
+            }
+            else
+            {
+                p = nom + off + (double) r * step / 3.0;
+                v = r == 0 ? vel : std::max (1, (int) ((double) vel * (r == 1 ? 0.7 : 0.5)));
+                gg = reps > 1 ? std::min (gate, step / 3.0 * 0.8) : gate;
+            }
             for (int i : iv)
                 out.push_back ({ p, t, clampv (c.note + st.pitch + i, 0, 127), clampv (c.channel, 1, 16), v, gg });
         }
     }
 
-    // Hur långt bakåt vi måste titta: största möjliga förskjutning + FLYTTA + ratchet.
-    double maxLookPpq() const { return msToPpq (260.0 * std::max (1.0, tempoScale())) + 0.125 + 1.0; }
+    // Hur långt bakåt vi måste titta: största möjliga förskjutning + FLYTTA + ratchet/studs.
+    double maxLookPpq() const { return msToPpq (260.0 * std::max (1.0, tempoScale())) + 0.125 + 1.5; }
 
     // Alla noter som ska spelas i [start, end), sorterade i tid.
     void collect (double start, double end, std::vector<NoteEv>& out) const

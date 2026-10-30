@@ -40,8 +40,8 @@ inline const std::vector<std::string>& orbitNames() { static const std::vector<s
 inline const std::vector<std::string>& barsNames() { static const std::vector<std::string> v { "1", "2", "4", "8", "16" }; return v; }
 inline int barsValue (int i) { static const int v[] = { 1, 2, 4, 8, 16 }; return v[(i < 0 || i > 4) ? 2 : i]; }
 
-enum Event { EAv, ETyst, EHicka, ERatchet, EHopp };
-inline const std::vector<std::string>& eventNames() { static const std::vector<std::string> v { "AV", "TYST", "HICKA", "RATCHET", "HOPP" }; return v; }
+enum Event { EAv, ETyst, EHicka, ERatchet, EHopp, EStuds };
+inline const std::vector<std::string>& eventNames() { static const std::vector<std::string> v { "AV", "TYST", "HICKA", "RATCHET", "HOPP", "STUDS" }; return v; }
 
 enum Chord { CEn, CMoll7, CMoll9, CKvart, CDub };
 inline const std::vector<std::string>& chordNames() { static const std::vector<std::string> v { "EN TON", "MOLL 7", "MOLL 9", "KVART", "DUB" }; return v; }
@@ -60,8 +60,10 @@ inline std::vector<int> chordIntervals (int c)
 enum IlMode { IlSpoke, IlFlytta, IlTyst };
 inline const std::vector<std::string>& ilNames() { static const std::vector<std::string> v { "SPOKE", "FLYTTA", "TYST" }; return v; }
 
-enum Style { SRominimal, SBerlin, SDub, SOrganisk };
-inline const std::vector<std::string>& styleNames() { static const std::vector<std::string> v { "BUKAREST", "BERLIN", "MIKRODUB", "ORGANISK" }; return v; }
+// De fyra första är GLAPP 1. KÖLN, KLINISK och RASTER kom i v2 (sist i listan, så att gamla projekt laddar rätt).
+enum Style { SRominimal, SBerlin, SDub, SOrganisk, SKoln, SKlinisk, SRaster };
+constexpr int NSTYLES = 7;
+inline const std::vector<std::string>& styleNames() { static const std::vector<std::string> v { "BUKAREST", "BERLIN", "MIKRODUB", "ORGANISK", "KÖLN", "KLINISK", "RASTER" }; return v; }
 
 // ---------------------------------------------------------------- mönstret
 // Ett steg: velocity (0 = av) och tonhöjd i halvtoner (för BAS/ACKORD).
@@ -152,8 +154,16 @@ struct GlobalCfg
     bool followTempo = true;
     bool interlock = true;
     int ilMode = IlSpoke;
+    float tomrum = 0.0f;  // 0..1, stryker slag (kicken rörs aldrig)
     uint32_t seed = 1;
 };
+
+// TOMRUM: hur gärna en roll tappar slag. Hat och klick går först, kicken aldrig.
+inline double tomrumWeight (int role)
+{
+    static const double w[] = { 0.0, 0.35, 1.0, 0.8, 0.8, 0.9, 0.45, 0.6 };
+    return w[(role < 0 || role >= NT) ? 0 : role];
+}
 
 // Snabb deterministisk slump: samma steg ger alltid samma värde, så att
 // sökning, loopar och export blir stabila.

@@ -39,7 +39,7 @@ Vill du bara höra GLAPP direkt: slå på **PROVLJUD**. Då spelar ett litet inb
 ## Kom igång på en minut
 
 1. Tryck play i Bitwig. GLAPP följer tempot och play/stop. Ingen DAW? Tryck **SPELA**.
-2. Bläddra bland presets med pilarna, eller klicka på namnet och välj bland alla 200.
+2. Bläddra bland presets med pilarna, eller klicka på namnet och välj bland alla 350.
 3. Välj **STIL** och tryck **DICE · MUTERA** tills något fastnar.
 4. **FRYS** spåren du gillar. Slå igen: bara de andra ändras.
 5. **ORBIT EVOLVE** behåller mönstret men ändrar hur det rör sig över tid.
@@ -54,14 +54,15 @@ Vill du bara höra GLAPP direkt: slå på **PROVLJUD**. Då spelar ett litet inb
 | **TRÖGHET** | Slag tätt i rad halkar allt senare (+12, +24, +38 ms), som på en oljefläck. |
 | **JITTER** | Liten mänsklig slump, 0–5 ms. Samma varje gång låten passerar stället, så loopar och export blir stabila. |
 | **ORBIT** | STEG +/−: mönstret vandrar ett steg var N:e takt. GLID: släppet andas fram och tillbaka. |
-| **HÄNDELSE** | På sista slaget i frasen (2/4/8/16 takter): TYST, HICKA (kastas 45 ms sent), RATCHET (trippelslag) eller HOPP (slaget hoppas över). |
+| **HÄNDELSE** | På sista slaget i frasen (2/4/8/16 takter): TYST, HICKA (kastas 45 ms sent), RATCHET (trippelslag), HOPP (slaget hoppas över) eller STUDS (en skiftnyckel som studsar nerför en trappa: fem slag, allt tätare och svagare). |
 | **INTERLOCK** | Två spår slår aldrig exakt samtidigt. Spåret högre upp vinner, kicken vinner alltid. Förloraren blir SPÖKE (velocity 18–35), FLYTTAS en sen 32-del eller tystas. |
 | **SLÄP / HUMAN** | Skalar allt släp och all jitter på en gång. |
+| **TOMRUM** | Groovet byggs av det som inte spelas. Stryker slag efter roll: hat och klick först, spöknoter före huvudslag, kicken aldrig. Samma slag försvinner alltid på samma ställe, så tomrummet blir ett mönster. |
 | **FÖLJ TEMPO** | Släppet är inställt för 122 BPM och följer tempot, så känslan blir densamma. |
 | **ACKORD** | Flera toner per träff: MOLL 7, MOLL 9, KVART, DUB. |
 | **Tärningar** | En stor (DICE · MUTERA), en per spår och ORBIT EVOLVE. Slumpen följer stilens regler och rör aldrig NOT eller KANAL. |
-| **4 stilar** | BUKAREST, BERLIN, MIKRODUB och ORGANISK. |
-| **200 presets** | 50 per stil. Frysta spår lämnas i fred vid preset-byte. |
+| **7 stilar** | BUKAREST, BERLIN, MIKRODUB, ORGANISK, KÖLN (schaffel i 8-delstrioler, dubbackord, studsar), KLINISK (subtraktivt: glest, korta klick, mycket TOMRUM) och RASTER (matematiskt: noll släp, euklidiskt, udda längder 5/7/9/11). |
+| **350 presets** | 50 per stil. Nummer 1–200 är samma som i GLAPP 1. Frysta spår lämnas i fred vid preset-byte. |
 | **URVERKET** | Ringar som visar hur spåren glider isär i realtid. |
 | **PROVLJUD** | Litet inbyggt trumkit, så att du hör GLAPP utan att koppla något. |
 
@@ -76,4 +77,4 @@ cmake --build build --config Release
 
 JUCE 8 hämtas automatiskt. GitHub Actions bygger varje push till `main` och lägger den som senaste release.
 
-Tester: `g++ -std=c++17 -Isrc tests/engine_test.cpp -o engine_test && ./engine_test` testar motorn och alla 200 presets. `cmake -B build -DGLAPP_TESTS=ON` bygger också ett test av hela pluginet.
+Tester: `g++ -std=c++17 -Isrc tests/engine_test.cpp -o engine_test && ./engine_test` testar motorn och alla 350 presets. `cmake -B build -DGLAPP_TESTS=ON` bygger också ett test av hela pluginet.

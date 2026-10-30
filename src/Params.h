@@ -61,6 +61,8 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
                                                   AudioParameterFloatAttributes().withStringFromValueFunction (pct)));
     L.add (std::make_unique<AudioParameterFloat> (ParameterID { "human", 1 }, "HUMAN", NormalisableRange<float> (0.0f, 2.0f, 0.01f), 1.0f,
                                                   AudioParameterFloatAttributes().withStringFromValueFunction (pct)));
+    L.add (std::make_unique<AudioParameterFloat> (ParameterID { "tomrum", 1 }, "TOMRUM", NormalisableRange<float> (0.0f, 1.0f, 0.01f), 0.0f,
+                                                  AudioParameterFloatAttributes().withStringFromValueFunction (pct)));
     L.add (std::make_unique<AudioParameterBool> (ParameterID { "foljtempo", 1 }, U ("FÖLJ TEMPO"), true));
     L.add (std::make_unique<AudioParameterBool> (ParameterID { "interlock", 1 }, "INTERLOCK", true));
     L.add (std::make_unique<AudioParameterChoice> (ParameterID { "ilmode", 1 }, U ("INTERLOCK LÄGE"), StringArray { U ("SPÖKE"), "FLYTTA", "TYST" }, 0));

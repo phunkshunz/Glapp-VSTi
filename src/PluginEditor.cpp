@@ -362,7 +362,7 @@ GlappEditor::GlappEditor (GlappProcessor& p) : AudioProcessorEditor (&p), proc (
     prevBtn.onClick = [this] { const int c = proc.currentPreset.load(); proc.loadPreset (c <= 0 ? NUM_PRESETS - 1 : c - 1); };
     nextBtn.onClick = [this] { const int c = proc.currentPreset.load(); proc.loadPreset (c < 0 || c >= NUM_PRESETS - 1 ? 0 : c + 1); };
     presetBtn.onClick = [this] { showPresetMenu(); };
-    presetBtn.setTooltip (U ("200 presets i fyra stilar. Frysta spår lämnas i fred."));
+    presetBtn.setTooltip (U ("350 presets i sju stilar. Frysta spår lämnas i fred."));
     for (auto* b : { &prevBtn, &nextBtn, &presetBtn }) addAndMakeVisible (*b);
 
     stil.attach (s, "stil");
@@ -403,6 +403,8 @@ GlappEditor::GlappEditor (GlappProcessor& p) : AudioProcessorEditor (&p), proc (
     slap.slider.setTooltip (U ("Skalar allt släp på alla spår. 0 % = rakt, 200 % = riktigt fullt."));
     human.attach (s, "human", "HUMAN");
     human.slider.setTooltip (U ("Skalar all jitter."));
+    tomrum.attach (s, "tomrum", "TOMRUM");
+    tomrum.slider.setTooltip (U ("Groovet byggs av det som inte spelas. Stryker slag: hat och klick först, spöknoter före huvudslag, kicken aldrig. Samma slag försvinner alltid på samma ställe."));
     provNiva.attach (s, "provniva", U ("PROV NIVÅ"));
     provNiva.setAccent (cold);
     folj.attach (s, "foljtempo");
@@ -411,7 +413,7 @@ GlappEditor::GlappEditor (GlappProcessor& p) : AudioProcessorEditor (&p), proc (
     interlock.setTooltip (U ("Två spår får aldrig slå exakt samtidigt. Spåret längre upp vinner, kicken vinner alltid."));
     ilMode.attach (s, "ilmode");
     ilMode.setTooltip (U ("Vad som händer med förloraren: SPÖKE = svag spöknot, FLYTTA = en sen 32-del, TYST = tas bort."));
-    for (auto* c : std::initializer_list<juce::Component*> { &slap, &human, &provNiva, &folj, &interlock, &ilMode }) addAndMakeVisible (*c);
+    for (auto* c : std::initializer_list<juce::Component*> { &slap, &human, &tomrum, &provNiva, &folj, &interlock, &ilMode }) addAndMakeVisible (*c);
 
     rensa.setTooltip (U ("Töm mönstret på valt spår."));
     rensa.onClick = [this] { proc.clearLane (selected); };
@@ -449,7 +451,7 @@ void GlappEditor::selectLane (int t)
     takt.setTooltip (U ("Stegets längd. Trioler (T) skaver mot raka spår."));
     orbit.setTooltip (U ("Rörelse över tid. STEG +/− vrider mönstret ett steg, GLID låter släppet andas fram och tillbaka."));
     orbTakt.setTooltip (U ("Hur ofta orbit flyttar, i takter."));
-    hand.setTooltip (U ("Vad som händer på sista slaget i frasen: TYST, HICKA (kastas sent), RATCHET (trippelslag) eller HOPP (slaget hoppas över)."));
+    hand.setTooltip (U ("Vad som händer på sista slaget i frasen: TYST, HICKA (kastas sent), RATCHET (trippelslag), HOPP (slaget hoppas över) eller STUDS (en skiftnyckel som studsar nerför en trappa: fem slag, allt tätare och svagare)."));
     handTakt.setTooltip (U ("Frasens längd i takter. Händelsen sker i sista takten."));
     ackord.setTooltip (U ("Spela flera toner per träff. Bäst på ACKORD-spåret till en synt."));
     for (auto* k : { &note, &kanal, &niva, &chans, &gate }) k->setAccent (ArmColours::lane (t));
@@ -461,12 +463,13 @@ void GlappEditor::showPresetMenu()
 {
     juce::PopupMenu m;
     const int cur = proc.currentPreset.load();
-    for (int s = 0; s < 4; ++s)
+    for (int s = 0; s < NSTYLES; ++s)
     {
         juce::PopupMenu sub;
-        for (int i = s * 50; i < s * 50 + 50; ++i)
+        const int a = s * PRESETS_PER_STYLE, b = a + PRESETS_PER_STYLE;
+        for (int i = a; i < b; ++i)
             sub.addItem (i + 1, U (presetName (i).c_str()), true, i == cur);
-        m.addSubMenu (U (styleNames()[(size_t) s].c_str()), sub, true, nullptr, cur >= s * 50 && cur < s * 50 + 50);
+        m.addSubMenu (U (styleNames()[(size_t) s].c_str()), sub, true, nullptr, cur >= a && cur < b);
     }
     m.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (&presetBtn),
                      [this] (int r) { if (r > 0) proc.loadPreset (r - 1); });
@@ -577,15 +580,15 @@ void GlappEditor::resized()
     r.removeFromBottom (10);
 
     // höger kolumn
-    rightArea = r.removeFromRight (330);
+    rightArea = r.removeFromRight (350);
     grooveArea = rightArea.removeFromBottom (150);
     rightArea.removeFromBottom (10);
     urArea = rightArea;
     urverk->setBounds (urArea.reduced (12).withTrimmedTop (22));
     {
         auto g = grooveArea.reduced (12, 8).withTrimmedTop (22);
-        auto knobs = g.removeFromLeft (200);
-        for (auto* k : { &slap, &human, &provNiva }) k->setBounds (knobs.removeFromLeft (66).withSizeKeepingCentre (64, 80));
+        auto knobs = g.removeFromLeft (224);
+        for (auto* k : { &slap, &human, &tomrum, &provNiva }) k->setBounds (knobs.removeFromLeft (56).withSizeKeepingCentre (56, 80));
         g.removeFromLeft (8);
         folj.setBounds (g.removeFromTop (24));
         g.removeFromTop (4);

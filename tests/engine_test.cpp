@@ -26,7 +26,7 @@ static void applyPreset (int idx, Pattern& pat, Engine& e)
         for (int i = 0; i < MAXS; ++i) pat.set (t, i, g.steps[(size_t) i]);
     }
     auto gg = diceGlobal (style, r);
-    e.g.slap = gg.slap; e.g.human = gg.human; e.g.interlock = gg.interlock; e.g.ilMode = gg.ilMode;
+    e.g.slap = gg.slap; e.g.human = gg.human; e.g.interlock = gg.interlock; e.g.ilMode = gg.ilMode; e.g.tomrum = gg.tomrum;
 }
 
 int main()
@@ -79,13 +79,13 @@ int main()
                 }
             }
         }
-        // glesheten: percen ska ha 1..6 träffar per 16 steg (Rominimal bygger på tystnad)
+        // glesheten: percen ska ha ~1..6 träffar per 16 steg (KLINISK får gå ner till 0,8)
         for (int t : { (int) RPerk1, (int) RPerk2 })
         {
             int hits = 0;
             for (int i = 0; i < e.tr[(size_t) t].length; ++i) hits += pat.get (t, i).vel > 0;
             const double per16 = hits * 16.0 / e.tr[(size_t) t].length;
-            CHECK (per16 >= 1.0 && per16 <= 6.0);
+            CHECK (per16 >= 0.8 && per16 <= 6.0);
         }
         CHECK (e.tr[RPerk1].length != e.tr[RPerk2].length);
     }
@@ -108,6 +108,48 @@ int main()
     }
     CHECK (kicks >= 12);
     std::printf ("Preset 4 (%s): %d kickar, %d rims, %zu noter på 4 takter\n", presetName (3).c_str(), kicks, rims, ev.size());
+
+    // TOMRUM: kicken rörs aldrig, hatten glesas ut
+    {
+        applyPreset (0, pat, e);
+        e.bpm = 122.0;
+        auto count = [&] (float tom, int track)
+        {
+            e.g.tomrum = tom;
+            std::vector<NoteEv> v;
+            e.collect (0.0, 64.0, v);
+            int c = 0;
+            for (auto& x : v) c += x.track == track;
+            return c;
+        };
+        const int k0 = count (0.0f, RKick), k1 = count (1.0f, RKick);
+        const int h0 = count (0.0f, RHat), h1 = count (1.0f, RHat);
+        CHECK (k0 == k1);
+        CHECK (h1 < h0 * 0.6);
+        std::printf ("TOMRUM 0 -> 100 %%: kick %d -> %d, hat %d -> %d\n", k0, k1, h0, h1);
+        e.g.tomrum = 0.0f;
+    }
+
+    // STUDS: fem slag, allt tätare och svagare, på sista slaget i frasen
+    {
+        Pattern sp;
+        Engine se;
+        se.pat = &sp;
+        se.bpm = 122.0;
+        for (int t = 0; t < NT; ++t) se.tr[(size_t) t].mute = true;
+        auto& c = se.tr[RPerk1];
+        c = TrackCfg {};
+        c.role = RPerk1; c.length = 16; c.div = D16; c.event = EStuds; c.eventBars = 0;   // varje takt
+        sp.set (RPerk1, 12, { 100, 0 });   // sista slaget
+        std::vector<NoteEv> v;
+        se.collect (0.0, 4.0, v);
+        CHECK (v.size() == 5);
+        for (size_t i = 1; i < v.size(); ++i)
+        {
+            CHECK (v[i].vel < v[i - 1].vel);
+            if (i > 1) CHECK (v[i].ppq - v[i - 1].ppq < v[i - 1].ppq - v[i - 2].ppq);
+        }
+    }
 
     // Text-format för mönster tål rundtur
     pat.set (6, 3, { 99, -2 });

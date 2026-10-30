@@ -19,6 +19,7 @@ GlappProcessor::GlappProcessor()
             raw[(size_t) t].p[k] = apvts.getRawParameterValue (tid (t, kKeys[k]));
     pSlap = apvts.getRawParameterValue ("slap");
     pHuman = apvts.getRawParameterValue ("human");
+    pTomrum = apvts.getRawParameterValue ("tomrum");
     pFolj = apvts.getRawParameterValue ("foljtempo");
     pIl = apvts.getRawParameterValue ("interlock");
     pIlMode = apvts.getRawParameterValue ("ilmode");
@@ -85,6 +86,7 @@ void GlappProcessor::readConfig (Engine& e) const
     }
     e.g.slap = pSlap->load();
     e.g.human = pHuman->load();
+    e.g.tomrum = pTomrum->load();
     e.g.followTempo = pFolj->load() > 0.5f;
     e.g.interlock = pIl->load() > 0.5f;
     e.g.ilMode = juce::roundToInt (pIlMode->load());
@@ -253,6 +255,7 @@ void GlappProcessor::diceAll()
     setParam ("slap", gg.slap);
     setParam ("human", gg.human);
     setParam ("ilmode", (float) gg.ilMode);
+    setParam ("tomrum", gg.tomrum);
     seed.store ((uint32_t) r.next());
     currentPreset.store (-1);
 }
@@ -317,6 +320,7 @@ void GlappProcessor::loadPreset (int index)
     setParam ("human", gg.human);
     setParam ("interlock", gg.interlock ? 1.0f : 0.0f);
     setParam ("ilmode", (float) gg.ilMode);
+    setParam ("tomrum", gg.tomrum);
     seed.store ((uint32_t) (presetSeed (index) & 0xffffffffu));
     currentPreset.store (index);
 }
