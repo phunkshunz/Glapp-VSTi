@@ -24,7 +24,7 @@ public:
     bool acceptsMidi() const override { return true; }
     bool producesMidi() const override { return true; }
     bool isMidiEffect() const override { return false; }
-    double getTailLengthSeconds() const override { return 0.0; }
+    double getTailLengthSeconds() const override { return std::numeric_limits<double>::infinity(); } // aldrig sövas av DAW:en (Bitwig)
 
     int getNumPrograms() override { return gl::NUM_PRESETS; }
     int getCurrentProgram() override { return juce::jmax (0, currentPreset.load()); }
