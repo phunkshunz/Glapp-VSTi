@@ -5,14 +5,14 @@ using namespace ArmColours;
 
 namespace
 {
-juce::String U (const char* s) { return juce::String::fromUTF8 (s); }
+juce::String U (const char* s) { return sprak::tr (juce::String::fromUTF8 (s)); }
 
 void label (juce::Graphics& g, juce::Rectangle<int> r, const juce::String& t, juce::Colour c = muted, float size = 9.5f,
             juce::Justification j = juce::Justification::centredLeft)
 {
     g.setColour (c);
     g.setFont (juce::FontOptions (size, juce::Font::bold));
-    g.drawText (t, r, j, false);
+    g.drawText (sprak::tr (t), r, j, false);
 }
 
 double stepMs (const Engine& e, int t) { return divPpq (e.tr[(size_t) t].div) * 60000.0 / std::max (20.0, e.bpm); }
@@ -349,7 +349,7 @@ private:
 };
 
 // ---------------------------------------------------------------- huvudfönstret
-GlappEditor::GlappEditor (GlappProcessor& p) : AudioProcessorEditor (&p), proc (p)
+GlappPanel::GlappPanel (GlappProcessor& p) : proc (p)
 {
     setLookAndFeel (&lnf);
     auto& s = proc.apvts;
@@ -427,13 +427,13 @@ GlappEditor::GlappEditor (GlappProcessor& p) : AudioProcessorEditor (&p), proc (
     startTimerHz (30);
 }
 
-GlappEditor::~GlappEditor()
+GlappPanel::~GlappPanel()
 {
     stopTimer();
     setLookAndFeel (nullptr);
 }
 
-void GlappEditor::selectLane (int t)
+void GlappPanel::selectLane (int t)
 {
     selected = t;
     auto& s = proc.apvts;
@@ -459,7 +459,7 @@ void GlappEditor::selectLane (int t)
     repaint (shopArea);
 }
 
-void GlappEditor::showPresetMenu()
+void GlappPanel::showPresetMenu()
 {
     juce::PopupMenu m;
     const int cur = proc.currentPreset.load();
@@ -475,7 +475,7 @@ void GlappEditor::showPresetMenu()
                      [this] (int r) { if (r > 0) proc.loadPreset (r - 1); });
 }
 
-void GlappEditor::timerCallback()
+void GlappPanel::timerCallback()
 {
     proc.readConfig (view);
     view.bpm = proc.uiBpm.load();
@@ -491,7 +491,7 @@ void GlappEditor::timerCallback()
     undoBtn.setEnabled (proc.canUndo());
 }
 
-void GlappEditor::paint (juce::Graphics& g)
+void GlappPanel::paint (juce::Graphics& g)
 {
     g.fillAll (ground);
 
@@ -523,7 +523,7 @@ void GlappEditor::paint (juce::Graphics& g)
     label (g, { ilMode.getX(), ilMode.getY() - 13, 140, 12 }, U ("INTERLOCK LÄGE"));
 }
 
-void GlappEditor::resized()
+void GlappPanel::resized()
 {
     auto r = getLocalBounds().reduced (12);
     r.removeFromTop (2);
@@ -602,4 +602,41 @@ void GlappEditor::resized()
     laneArea = r;
     const int h = r.getHeight() / NT;
     for (auto& l : lanes) l->setBounds (r.removeFromTop (h).reduced (0, 2));
+}
+
+//==============================================================================
+// Ramen runt panelen: SV | EN-knappen bygger om panelen på valt språk.
+GlappEditor::GlappEditor (GlappProcessor& p) : AudioProcessorEditor (&p), proc (p)
+{
+    sprak::laddaOm();
+    byggPanel();
+    sprakKnapp.accent = sodium;
+    sprakKnapp.onClick = [this]
+    {
+        sprak::sattEngelska (! sprak::engelska());
+        juce::Component::SafePointer<GlappEditor> self (this);
+        juce::MessageManager::callAsync ([self] { if (self != nullptr) self->byggPanel(); });
+    };
+    addAndMakeVisible (sprakKnapp);
+    setSize (1240, 790);
+}
+
+GlappEditor::~GlappEditor() = default;
+
+void GlappEditor::byggPanel()
+{
+    panel.reset();
+    panel = std::make_unique<GlappPanel> (proc);
+    sprak::oversattAllt (*panel);
+    addAndMakeVisible (*panel);
+    sprakKnapp.toFront (false);
+    sprakKnapp.repaint();
+    resized();
+}
+
+void GlappEditor::resized()
+{
+    if (panel != nullptr) panel->setBounds (getLocalBounds());
+    // under kugghjulen i loggan, där det är tomt
+    sprakKnapp.setBounds (12 + 142, 14 + 52, 38, 14);
 }

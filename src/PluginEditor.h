@@ -8,11 +8,12 @@ class StepGrid;
 class LaneRow;
 class Urverket;
 
-class GlappEditor : public juce::AudioProcessorEditor, private juce::Timer
+// Själva panelen. Byggs om när språket byts.
+class GlappPanel : public juce::Component, private juce::Timer
 {
 public:
-    explicit GlappEditor (GlappProcessor&);
-    ~GlappEditor() override;
+    explicit GlappPanel (GlappProcessor&);
+    ~GlappPanel() override;
 
     void paint (juce::Graphics&) override;
     void resized() override;
@@ -53,7 +54,26 @@ private:
     juce::TextButton rensa { "RENSA" };
 
     juce::Rectangle<int> topArea, laneArea, rightArea, shopArea, grooveArea, urArea;
-    AboutOverlay about { "GLAPP", juce::String::fromUTF8 ("MIDI-maskin för mikrosläp och fasdrift") };
+    AboutOverlay about { "GLAPP", utf8 ("MIDI-maskin för mikrosläp och fasdrift") + " · v2.1" };
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GlappPanel)
+};
+
+//==============================================================================
+class GlappEditor : public juce::AudioProcessorEditor
+{
+public:
+    explicit GlappEditor (GlappProcessor&);
+    ~GlappEditor() override;
+    void resized() override;
+    void paint (juce::Graphics& g) override { g.fillAll (ArmColours::ground); }
+
+private:
+    void byggPanel();
+
+    GlappProcessor& proc;
+    std::unique_ptr<GlappPanel> panel;
+    sprak::Knapp sprakKnapp;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GlappEditor)
 };
