@@ -109,11 +109,51 @@ jobs:
           name: GLAPP-Windows
           path: dist/GLAPP-Windows.zip
 
+  linux:
+    needs: manual
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Installera beroenden
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libasound2-dev libjack-jackd2-dev ladspa-sdk libcurl4-openssl-dev libfreetype6-dev libfontconfig1-dev libx11-dev libxcomposite-dev libxcursor-dev libxext-dev libxinerama-dev libxrandr-dev libxrender-dev libwebkit2gtk-4.0-dev libglu1-mesa-dev mesa-common-dev
+
+      - name: Konfigurera
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Bygg
+        run: cmake --build build --config Release --target Glapp_VST3 Glapp_LV2 -j 4
+
+      - name: Hämta manualen
+        uses: actions/download-artifact@v4
+        with:
+          name: GLAPP-Manual
+          path: dist/GLAPP
+
+      - name: Paketera
+        run: |
+          mkdir -p dist/GLAPP
+          for t in Glapp; do
+            cp -R build/${t}_artefacts/Release/VST3/*.vst3 dist/GLAPP/
+            cp -R build/${t}_artefacts/Release/LV2/*.lv2 dist/GLAPP/
+          done
+          cp scripts/installera-linux.sh dist/GLAPP/
+          chmod +x dist/GLAPP/installera-linux.sh
+          cd dist && zip -r -y GLAPP-Linux.zip GLAPP
+
+      - name: Ladda upp
+        uses: actions/upload-artifact@v4
+        with:
+          name: GLAPP-Linux
+          path: dist/GLAPP-Linux.zip
+
   # Varje bygge på main blir en release, så att
   # .../releases/latest/download/GLAPP-macOS.zip alltid ger senaste versionen.
   release:
     if: always() && github.event_name == 'push' && needs.macos.result == 'success'
-    needs: [manual, macos, windows]
+    needs: [manual, macos, windows, linux]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
@@ -128,8 +168,9 @@ jobs:
           name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('GLAPP bygge {0}', github.run_number) }}
           target_commitish: ${{ github.sha }}
           make_latest: true
-          body: "Mac: ladda ner GLAPP-macOS.zip och installera enligt README. Windows: GLAPP-Windows.zip (VST3). Manualen ligger i zipparna och som PDF här."
+          body: "Mac: ladda ner GLAPP-macOS.zip och installera enligt README. Windows: GLAPP-Windows.zip (VST3). Linux: GLAPP-Linux.zip (VST3 + LV2). Manualen ligger i zipparna och som PDF här."
           files: |
             dist/GLAPP-macOS.zip
             dist/GLAPP-Windows.zip
+            dist/GLAPP-Linux.zip
             dist/GLAPP-Manual.pdf

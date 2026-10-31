@@ -20,6 +20,11 @@ endif()
 
 # GLAPP gör inget eget ljud (utom provljudet). Den skickar MIDI ut till nästa
 # instrument, därför är den ett instrument med MIDI-utgång.
+# Linux: bygg även LV2
+set(PHZ_EXTRA_FORMATS "")
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(PHZ_EXTRA_FORMATS LV2)
+endif()
 juce_add_plugin(Glapp
     COMPANY_NAME "Phunkshunz AUDIO"
     PRODUCT_NAME "GLAPP"
@@ -34,7 +39,8 @@ juce_add_plugin(Glapp
     COPY_PLUGIN_AFTER_BUILD FALSE
     VST3_CATEGORIES Instrument Generator Drum
     AU_MAIN_TYPE kAudioUnitType_MusicDevice
-    FORMATS VST3 AU Standalone)
+    LV2URI "https://phunkshunz.github.io/lv2/Glapp"
+    FORMATS VST3 AU Standalone ${PHZ_EXTRA_FORMATS})
 
 target_sources(Glapp
     PRIVATE
