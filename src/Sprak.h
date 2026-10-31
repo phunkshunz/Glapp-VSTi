@@ -57,6 +57,14 @@ inline bool& lage()
     return en;
 }
 
+// Sant när valet är inläst. Text som skapas innan dess (när pluginet laddas)
+// står kvar på svenska och översätts först när panelen byggs.
+inline bool& laddat()
+{
+    static bool l = false;
+    return l;
+}
+
 // Läser om valet från filen (anropas när fönstret öppnas, så ett val gjort
 // i en annan maskin syns direkt).
 inline void laddaOm()
@@ -64,13 +72,15 @@ inline void laddaOm()
     juce::PropertiesFile f (installningar());
     const auto v = f.getValue ("sprak");
     lage() = v.isEmpty() ? ! svenskDator() : (v == "en");
+    laddat() = true;
 }
 
-inline bool engelska() { return lage(); }
+inline bool engelska() { return laddat() && lage(); }
 
 inline void sattEngelska (bool en)
 {
     lage() = en;
+    laddat() = true;
     juce::PropertiesFile f (installningar());
     f.setValue ("sprak", en ? "en" : "sv");
     f.saveIfNeeded();
@@ -105,6 +115,9 @@ inline juce::String tr (const juce::String& s)
         }
     return s;
 }
+
+inline juce::String trU (const char* s)        { return tr (juce::String::fromUTF8 (s)); }
+inline juce::String trU (const char* s, int n) { return tr (juce::String::fromUTF8 (s, n)); }
 
 // Går igenom en färdigbyggd panel och byter text på knappar, etiketter,
 // listor och tooltips som skrevs in utan tr().
