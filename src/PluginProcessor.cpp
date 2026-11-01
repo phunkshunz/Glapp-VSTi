@@ -210,6 +210,14 @@ void GlappProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiB
     uiPlaying.store (running);
 }
 
+void GlappProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
+{
+    buffer.clear();
+    for (auto& p : pending) midi.addEvent (juce::MidiMessage::noteOff (p.channel, p.note), 0);
+    pending.clear();
+    wasRunning = false;   // när bypass släpps börjar GLAPP om rent
+}
+
 // ---------------------------------------------------------------- tärning, presets, ångra
 void GlappProcessor::setParam (const juce::String& id, float value)
 {

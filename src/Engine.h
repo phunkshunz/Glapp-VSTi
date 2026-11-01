@@ -206,12 +206,14 @@ public:
     // Hur långt bakåt vi måste titta: största möjliga förskjutning + FLYTTA + ratchet/studs.
     double maxLookPpq() const { return msToPpq (260.0 * std::max (1.0, tempoScale())) + 0.125 + 1.5; }
 
+    // Arbetsminne för collect, reserverat en gång så att ljudtråden aldrig allokerar.
+    Engine() { scratch.reserve (1024); }
+
     // Alla noter som ska spelas i [start, end), sorterade i tid.
     void collect (double start, double end, std::vector<NoteEv>& out) const
     {
         const double look = maxLookPpq();
-        std::vector<NoteEv> tmp;
-        tmp.reserve (64);
+        auto& tmp = scratch;
         for (int t = 0; t < NT; ++t)
         {
             if (tr[(size_t) t].mute) continue;
@@ -223,8 +225,19 @@ public:
             for (auto& e : tmp)
                 if (e.ppq >= start && e.ppq < end) out.push_back (e);
         }
-        std::stable_sort (out.begin(), out.end(), [] (const NoteEv& a, const NoteEv& b) { return a.ppq < b.ppq; });
+        // stabil insättningssortering: få noter per block, och std::stable_sort kan allokera
+        for (size_t i = 1; i < out.size(); ++i)
+        {
+            const NoteEv e = out[i];
+            size_t j = i;
+            while (j > 0 && out[j - 1].ppq > e.ppq) { out[j] = out[j - 1]; --j; }
+            out[j] = e;
+        }
     }
+
+private:
+    mutable std::vector<NoteEv> scratch;
+public:
 
     // För GUI:t: hur sent ett steg i mönstret ligger (DRAG + TRÖGHET), utan slump.
     double staticOffsetMs (int t, int idx) const

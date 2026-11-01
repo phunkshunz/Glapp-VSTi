@@ -45,15 +45,22 @@ inline const std::vector<std::string>& eventNames() { static const std::vector<s
 
 enum Chord { CEn, CMoll7, CMoll9, CKvart, CDub };
 inline const std::vector<std::string>& chordNames() { static const std::vector<std::string> v { "EN TON", "MOLL 7", "MOLL 9", "KVART", "DUB" }; return v; }
-inline std::vector<int> chordIntervals (int c)
+// Fast storlek (ingen heap): anropas i ljudtråden för varje not.
+struct Intervals
+{
+    int v[5] {}; int n = 1;
+    const int* begin() const { return v; }
+    const int* end() const { return v + n; }
+};
+inline Intervals chordIntervals (int c)
 {
     switch (c)
     {
-        case CMoll7: return { 0, 3, 7, 10 };
-        case CMoll9: return { 0, 3, 7, 10, 14 };
-        case CKvart: return { 0, 5, 10, 15 };
-        case CDub:   return { 0, 7, 10, 15 };
-        default:     return { 0 };
+        case CMoll7: return { { 0, 3, 7, 10 }, 4 };
+        case CMoll9: return { { 0, 3, 7, 10, 14 }, 5 };
+        case CKvart: return { { 0, 5, 10, 15 }, 4 };
+        case CDub:   return { { 0, 7, 10, 15 }, 4 };
+        default:     return { { 0 }, 1 };
     }
 }
 
