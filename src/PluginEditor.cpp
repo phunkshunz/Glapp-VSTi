@@ -10,8 +10,8 @@ juce::String U (const char* s) { return sprak::tr (juce::String::fromUTF8 (s)); 
 void label (juce::Graphics& g, juce::Rectangle<int> r, const juce::String& t, juce::Colour c = muted, float size = 9.5f,
             juce::Justification j = juce::Justification::centredLeft)
 {
-    g.setColour (c);
-    g.setFont (juce::FontOptions (size, juce::Font::bold));
+    g.setColour (c == muted ? mh::Form::ink3() : c);
+    g.setFont (mh::Form::text (size + 0.5f, false, 0.1f));
     g.drawText (sprak::tr (t), r, j, false);
 }
 
@@ -36,33 +36,18 @@ public:
     std::function<void()> onClick;
     void paint (juce::Graphics& g) override
     {
+        // ordmärket: bara namnet, i Plex, med luft mellan bokstäverna. Inga ikoner.
         auto r = getLocalBounds();
-        g.setColour (sodium);
-        g.setFont (juce::FontOptions (44.0f, juce::Font::bold).withHorizontalScale (0.85f));
-        g.drawText ("GLAPP", r.removeFromTop (48), juce::Justification::centredLeft);
-        g.setColour (muted);
-        g.setFont (juce::FontOptions (9.5f, juce::Font::bold));
-        g.drawText ("MASKINHALLEN", r.removeFromTop (12), juce::Justification::centredLeft);
-        g.setFont (juce::FontOptions (9.0f));
-        g.drawText ("Phunkshunz AUDIO", r.removeFromTop (12), juce::Justification::centredLeft);
-        // två kugghjul som inte riktigt griper i varandra
-        auto cog = [&] (float cx, float cy, float rad, float rot, juce::Colour c)
-        {
-            juce::Path p;
-            for (int i = 0; i < 8; ++i)
-            {
-                juce::Path tooth;
-                tooth.addRectangle (-2.0f, -rad - 3.0f, 4.0f, 5.0f);
-                p.addPath (tooth, juce::AffineTransform::rotation ((float) i * juce::MathConstants<float>::twoPi / 8.0f));
-            }
-            p.addEllipse (-rad, -rad, rad * 2.0f, rad * 2.0f);
-            g.setColour (c);
-            g.fillPath (p, juce::AffineTransform::rotation (rot).translated (cx, cy));
-            g.setColour (juce::Colour (0xff111214));
-            g.fillEllipse (cx - rad * 0.35f, cy - rad * 0.35f, rad * 0.7f, rad * 0.7f);
-        };
-        cog (146.0f, 22.0f, 9.0f, 0.2f, sodium.withAlpha (0.9f));
-        cog (167.0f, 30.0f, 7.0f, 0.55f, cold.withAlpha (0.9f));
+        g.setColour (mh::Form::ink());
+        g.setFont (mh::Form::text (30.0f, true, 0.22f));
+        g.drawText ("GLAPP", r.removeFromTop (40), juce::Justification::centredLeft);
+        g.setColour (mh::Form::ink3());
+        g.setFont (mh::Form::text (9.5f, false, 0.2f));
+        g.drawText ("MASKINHALLEN  /  PHUNKSHUNZ", r.removeFromTop (14), juce::Justification::centredLeft);
+        // signalfärgen, en gång: en liten fyrkant efter namnet
+        g.setColour (mh::Form::accent());
+        const float wx = 6.0f + juce::GlyphArrangement::getStringWidth (mh::Form::text (30.0f, true, 0.22f), "GLAPP");
+        g.fillRect (juce::Rectangle<float> (wx, 25.0f, 5.0f, 5.0f));
     }
     void mouseUp (const juce::MouseEvent&) override { if (onClick) onClick(); }
     void mouseEnter (const juce::MouseEvent&) override { setMouseCursor (juce::MouseCursor::PointingHandCursor); }
@@ -88,40 +73,38 @@ public:
     void paint (juce::Graphics& g) override
     {
         auto r = getLocalBounds().toFloat();
-        g.setColour (ground);
-        g.fillRoundedRectangle (r, 4.0f);
-        const auto col = ArmColours::lane (t);
+        const auto col = mh::Form::ink();
         const float cw = r.getWidth() / (float) len;
         const int cur = (int) std::floor (head);
 
         for (int i = 0; i < len; ++i)
         {
-            auto c = juce::Rectangle<float> (r.getX() + i * cw, r.getY(), cw, r.getHeight()).reduced (1.0f, 3.0f);
+            auto c = juce::Rectangle<float> (r.getX() + i * cw, r.getY(), cw, r.getHeight()).reduced (1.0f, 4.0f);
             const bool beat = (i % 4) == 0;
-            g.setColour (beat ? raised : panel);
-            g.fillRoundedRectangle (c, 2.0f);
+            g.setColour (beat ? mh::Form::cell() : mh::Form::raised());
+            g.fillRect (c);
             const auto st = proc.pattern.get (t, i);
             if (st.vel > 0)
             {
                 const float h = c.getHeight() * (0.18f + 0.82f * (float) st.vel / 127.0f);
                 auto bar = c.withTop (c.getBottom() - h);
-                g.setColour (col.withAlpha (st.vel < 40 ? 0.45f : 0.9f));
-                g.fillRoundedRectangle (bar, 2.0f);
+                g.setColour (st.vel < 40 ? mh::Form::ink3() : col.withAlpha (0.92f));
+                g.fillRect (bar);
                 // var noten faktiskt landar: en tunn linje förskjuten med släpet
                 const float ox = c.getX() + juce::jlimit (0.0f, 1.0f, offs[(size_t) i]) * cw;
-                g.setColour (juce::Colours::white.withAlpha (0.85f));
-                g.fillRect (juce::Rectangle<float> (ox, c.getY(), 1.5f, 5.0f));
+                g.setColour (mh::Form::accent().withAlpha (0.9f));
+                g.fillRect (juce::Rectangle<float> (ox, c.getY() - 3.0f, 1.0f, 3.0f));
                 if (st.pitch != 0 && cw > 11.0f)
                 {
-                    g.setColour (ground);
-                    g.setFont (juce::FontOptions (8.5f, juce::Font::bold));
+                    g.setColour (mh::Form::bg());
+                    g.setFont (mh::Form::mono (8.5f));
                     g.drawText ((st.pitch > 0 ? "+" : "") + juce::String (st.pitch), bar.toNearestInt(), juce::Justification::centredBottom, false);
                 }
             }
             if (playing && i == cur)
             {
-                g.setColour (text.withAlpha (0.8f));
-                g.drawRoundedRectangle (c, 2.0f, 1.2f);
+                g.setColour (mh::Form::accent());
+                g.fillRect (juce::Rectangle<float> (c.getX(), c.getBottom() + 2.0f, c.getWidth(), 1.5f));
             }
         }
     }
@@ -185,7 +168,7 @@ public:
     {
         auto& s = proc.apvts;
         nameBtn.setButtonText (U (roleName (t)));
-        nameBtn.setColour (juce::TextButton::textColourOffId, ArmColours::lane (t));
+        nameBtn.setColour (juce::TextButton::textColourOffId, mh::Form::ink());
         nameBtn.setTooltip (U ("Visa ") + U (roleName (t)) + U (" i verkstaden"));
         nameBtn.onClick = [this] { select (t); };
         addAndMakeVisible (nameBtn);
@@ -245,13 +228,13 @@ public:
 
     void paint (juce::Graphics& g) override
     {
-        auto b = getLocalBounds().toFloat().reduced (0.5f);
-        g.setColour (panel);
-        g.fillRoundedRectangle (b, 5.0f);
-        g.setColour (sel ? ArmColours::lane (t).withAlpha (0.7f) : line);
-        g.drawRoundedRectangle (b, 5.0f, sel ? 1.4f : 1.0f);
-        g.setColour (ArmColours::lane (t).withAlpha (0.15f + 0.85f * flash));
-        g.fillEllipse (ledArea.toFloat());
+        // formspråket: ingen ruta. En hårlinje under, och det valda spåret får en tunn signalrand till vänster.
+        auto b = getLocalBounds();
+        if (sel) { g.setColour (mh::Form::panel().brighter (0.03f)); g.fillRect (b); g.setColour (mh::Form::accent()); g.fillRect (b.withWidth (2)); }
+        g.setColour (mh::Form::hair());
+        g.fillRect (b.withTop (b.getBottom() - 1));
+        g.setColour (flash > 0.05f ? mh::Form::accent().withAlpha (0.25f + 0.75f * flash) : mh::Form::hair2());
+        g.fillEllipse (ledArea.toFloat().reduced (1.0f));
     }
 
     void mouseDown (const juce::MouseEvent&) override { select (t); }
@@ -306,39 +289,37 @@ public:
         const float rMax = size * 0.5f, rMin = size * 0.12f;
         const float tw = juce::MathConstants<float>::twoPi;
 
-        g.setColour (ground);
-        g.fillEllipse (c.x - rMax - 3, c.y - rMax - 3, (rMax + 3) * 2, (rMax + 3) * 2);
 
         for (int t = 0; t < NT; ++t)
         {
             const auto& r = rings[(size_t) t];
             const float rad = rMin + (rMax - rMin) * ((float) t + 0.5f) / (float) NT;
-            const auto col = ArmColours::lane (t).withMultipliedAlpha (r.mute ? 0.25f : 1.0f);
-            g.setColour (line);
+            const auto col = mh::Form::ink().withMultipliedAlpha (r.mute ? 0.25f : (t % 2 ? 0.7f : 1.0f));
+            g.setColour (mh::Form::hair());
             g.drawEllipse (c.x - rad, c.y - rad, rad * 2, rad * 2, 1.0f);
             for (int i = 0; i < r.len; ++i)
             {
                 const float a = tw * (float) i / (float) r.len - juce::MathConstants<float>::halfPi;
                 const juce::Point<float> tick (c.x + std::cos (a) * rad, c.y + std::sin (a) * rad);
-                g.setColour (line2);
-                g.fillEllipse (tick.x - 1.0f, tick.y - 1.0f, 2.0f, 2.0f);
+                g.setColour (mh::Form::hair2());
+                g.fillEllipse (tick.x - 0.8f, tick.y - 0.8f, 1.6f, 1.6f);
                 const int v = r.vel[(size_t) i];
                 if (v <= 0) continue;
                 const float aa = tw * ((float) i + r.off[(size_t) i]) / (float) r.len - juce::MathConstants<float>::halfPi;
-                const float d = 3.0f + 4.0f * (float) v / 127.0f;
+                const float d = 2.5f + 3.0f * (float) v / 127.0f;
                 g.setColour (col.withAlpha (v < 40 ? 0.5f : 0.95f));
                 g.fillEllipse (c.x + std::cos (aa) * rad - d * 0.5f, c.y + std::sin (aa) * rad - d * 0.5f, d, d);
             }
             if (playing)
             {
                 const float ah = tw * (float) (r.head / r.len) - juce::MathConstants<float>::halfPi;
-                g.setColour (col.withAlpha (0.35f));
-                g.drawLine (c.x + std::cos (ah) * (rad - 4), c.y + std::sin (ah) * (rad - 4),
-                            c.x + std::cos (ah) * (rad + 4), c.y + std::sin (ah) * (rad + 4), 2.5f);
+                g.setColour (mh::Form::accent().withAlpha (0.7f));
+                g.drawLine (c.x + std::cos (ah) * (rad - 3), c.y + std::sin (ah) * (rad - 3),
+                            c.x + std::cos (ah) * (rad + 3), c.y + std::sin (ah) * (rad + 3), 1.5f);
             }
         }
-        g.setColour (sodium);
-        g.fillEllipse (c.x - 4, c.y - 4, 8, 8);
+        g.setColour (mh::Form::accent());
+        g.fillEllipse (c.x - 2.5f, c.y - 2.5f, 5.0f, 5.0f);
     }
 
 private:
@@ -352,6 +333,7 @@ private:
 GlappPanel::GlappPanel (GlappProcessor& p) : proc (p)
 {
     setLookAndFeel (&lnf);
+    juce::LookAndFeel::setDefaultLookAndFeel (&lnf);   // all text (även tooltips och menyer) får Plex
     auto& s = proc.apvts;
 
     auto* lg = new GlappLogo();
@@ -430,6 +412,7 @@ GlappPanel::GlappPanel (GlappProcessor& p) : proc (p)
 GlappPanel::~GlappPanel()
 {
     stopTimer();
+    juce::LookAndFeel::setDefaultLookAndFeel (nullptr);
     setLookAndFeel (nullptr);
 }
 
@@ -495,18 +478,9 @@ void GlappPanel::paint (juce::Graphics& g)
 {
     g.fillAll (ground);
 
-    // varningsrand längst upp
-    auto stripe = getLocalBounds().removeFromTop (4).toFloat();
-    g.saveState();
-    g.reduceClipRegion (stripe.toNearestInt());
-    for (float x = -20.0f; x < stripe.getRight(); x += 20.0f)
-    {
-        juce::Path p;
-        p.addQuadrilateral (x, stripe.getBottom(), x + 10.0f, stripe.getY(), x + 20.0f, stripe.getY(), x + 10.0f, stripe.getBottom());
-        g.setColour (sodium.withAlpha (0.8f));
-        g.fillPath (p);
-    }
-    g.restoreState();
+    // hårlinje under toppraden, i stället för varningsranden
+    g.setColour (mh::Form::hair());
+    g.fillRect (0, topArea.getBottom(), getWidth(), 1);
 
     drawPanel (g, urArea, "URVERKET", U ("hur spåren glider isär"));
     drawPanel (g, grooveArea, "GROOVE");

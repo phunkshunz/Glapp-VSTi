@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(GLAPP VERSION 2.1.1)
+project(GLAPP VERSION 2.2.0)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -54,8 +54,14 @@ target_compile_definitions(Glapp
         JUCE_VST3_CAN_REPLACE_VST2=0
         JUCE_DISPLAY_SPLASH_SCREEN=0)
 
+# MASKINHALLENS formspråk: IBM Plex Sans Condensed + Plex Mono (SIL Open Font License, se fonts/OFL.txt)
+file(GLOB MH_FONTS CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/fonts/*.ttf)
+juce_add_binary_data(GlappFonts SOURCES ${MH_FONTS})
+set_target_properties(GlappFonts PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
+
 target_link_libraries(Glapp
     PRIVATE
+        GlappFonts
         juce::juce_audio_utils
     PUBLIC
         juce::juce_recommended_config_flags

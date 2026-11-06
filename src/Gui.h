@@ -3,148 +3,38 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "Sprak.h"
+#include "Formsprak.h"
 
-// Utseende: MASKINHALLEN. Mörkt stål, kopparglöd, mässing och kallt stålblått.
+// Utseende: MASKINHALLENS formspråk (Formsprak.h). Minimal svart, en signalfärg.
 namespace ArmColours
 {
-const juce::Colour ground   { 0xff111214 };
-const juce::Colour panel    { 0xff191b1e };
-const juce::Colour raised   { 0xff22252a };
-const juce::Colour line     { 0xff2b2f35 };
-const juce::Colour line2    { 0xff363b42 };
-const juce::Colour text     { 0xffdcd8d0 };
-const juce::Colour muted    { 0xff8d9097 };
-const juce::Colour sodium   { 0xffe07a3c };   // koppar (huvudfärgen)
-const juce::Colour sodiumDk { 0xffa9552a };
-const juce::Colour cold     { 0xffe8c25a };   // mässing
-const juce::Colour coldDk   { 0xffb8952f };
-const juce::Colour concrete { 0xff7fa6c4 };   // kallt stålblått
-const juce::Colour steel    { 0xff9aa1aa };
+const juce::Colour ground   { mh::Form::kBg };
+const juce::Colour panel    { mh::Form::kPanel };
+const juce::Colour raised   { mh::Form::kRaised };
+const juce::Colour line     { mh::Form::kHair };
+const juce::Colour line2    { mh::Form::kHair2 };
+const juce::Colour text     { mh::Form::kInk };
+const juce::Colour muted    { mh::Form::kInk3 };
+const juce::Colour sodium   { 0xffff5b36 };   // GLAPP: signalröd, bara för det som är på eller spelar
+const juce::Colour sodiumDk { 0xffb8402a };
+const juce::Colour cold     { mh::Form::kInk };
+const juce::Colour coldDk   { mh::Form::kInk2 };
+const juce::Colour concrete { mh::Form::kInk2 };
+const juce::Colour steel    { mh::Form::kInk3 };
 
-// lådornas färger: KLICK, TICK, RÖST, TON, BRUS, SPÖKE
-inline juce::Colour box (int b)
-{
-    static const juce::Colour c[] = { juce::Colour (0xffe07a3c), juce::Colour (0xffe8c25a), juce::Colour (0xffd77fa1),
-                                      juce::Colour (0xff7fa6c4), juce::Colour (0xff8fb59a), juce::Colour (0xffb0a4d6) };
-    return c[(size_t) juce::jlimit (0, 5, b)];
-}
-
-// spårens färger
-inline juce::Colour lane (int i)
-{
-    static const juce::Colour c[] = { juce::Colour (0xfff0e6d6), juce::Colour (0xffe07a3c), juce::Colour (0xffe8a05a), juce::Colour (0xffe8c25a),
-                                      juce::Colour (0xffd77fa1), juce::Colour (0xff7fa6c4), juce::Colour (0xff8fb59a), juce::Colour (0xffb0a4d6) };
-    return c[(size_t) juce::jlimit (0, 7, i)];
-}
+// lådorna och spåren: svartvitt. Färg betyder något (på, spelar, vald), inte vilket spår det är.
+inline juce::Colour box (int b) { return (b % 2) == 0 ? text : coldDk; }
+inline juce::Colour lane (int i) { return (i % 2) == 0 ? text : juce::Colour (0xffc4c1ba); }
 } // namespace ArmColours
 
 // All svensk text går genom utf8(): den blir engelsk när EN är valt.
 inline juce::String utf8 (const char* s) { return sprak::tr (juce::String::fromUTF8 (s)); }
 
-class ArmLnF : public juce::LookAndFeel_V4
+// Rattar, knappar, listor och typsnitt kommer från formspråket.
+class ArmLnF : public mh::FormLookAndFeel
 {
 public:
-    ArmLnF()
-    {
-        using namespace ArmColours;
-        setColour (juce::ResizableWindow::backgroundColourId, ground);
-        setColour (juce::TextButton::buttonColourId, raised);
-        setColour (juce::TextButton::buttonOnColourId, sodium);
-        setColour (juce::TextButton::textColourOffId, text);
-        setColour (juce::TextButton::textColourOnId, ground);
-        setColour (juce::ComboBox::backgroundColourId, raised);
-        setColour (juce::ComboBox::textColourId, text);
-        setColour (juce::ComboBox::outlineColourId, line2);
-        setColour (juce::ComboBox::arrowColourId, sodium);
-        setColour (juce::PopupMenu::backgroundColourId, panel);
-        setColour (juce::PopupMenu::textColourId, text);
-        setColour (juce::PopupMenu::highlightedBackgroundColourId, sodium);
-        setColour (juce::PopupMenu::highlightedTextColourId, ground);
-        setColour (juce::PopupMenu::headerTextColourId, muted);
-        setColour (juce::Slider::rotarySliderFillColourId, sodium);
-        setColour (juce::Slider::textBoxTextColourId, text);
-        setColour (juce::Slider::textBoxBackgroundColourId, raised);
-        setColour (juce::Slider::textBoxOutlineColourId, line2);
-        setColour (juce::Label::textColourId, text);
-        setColour (juce::ListBox::backgroundColourId, panel);
-        setColour (juce::ScrollBar::thumbColourId, line2);
-        setColour (juce::ToggleButton::textColourId, text);
-        setColour (juce::ToggleButton::tickColourId, sodium);
-    }
-
-    void drawRotarySlider (juce::Graphics& g, int x, int y, int w, int h, float pos,
-                           float startAngle, float endAngle, juce::Slider& s) override
-    {
-        using namespace ArmColours;
-        auto bounds = juce::Rectangle<float> ((float) x, (float) y, (float) w, (float) h).reduced (2.0f);
-        const float size = juce::jmin (bounds.getWidth(), bounds.getHeight());
-        auto r = juce::Rectangle<float> (size, size).withCentre (bounds.getCentre());
-        const float thick = juce::jmax (2.5f, size * 0.09f);
-        const auto arcR = r.reduced (thick * 0.5f);
-        const float angle = startAngle + pos * (endAngle - startAngle);
-        const auto accent = s.findColour (juce::Slider::rotarySliderFillColourId);
-
-        juce::Path track;
-        track.addCentredArc (arcR.getCentreX(), arcR.getCentreY(), arcR.getWidth() * 0.5f, arcR.getHeight() * 0.5f, 0, startAngle, endAngle, true);
-        g.setColour (line);
-        g.strokePath (track, juce::PathStrokeType (thick, juce::PathStrokeType::curved, juce::PathStrokeType::butt));
-
-        // bipolära rattar (min < 0) fylls från mitten
-        const bool bipolar = s.getMinimum() < 0.0 && s.getMaximum() > 0.0;
-        const float from = bipolar ? (startAngle + endAngle) * 0.5f : startAngle;
-        juce::Path val;
-        val.addCentredArc (arcR.getCentreX(), arcR.getCentreY(), arcR.getWidth() * 0.5f, arcR.getHeight() * 0.5f, 0,
-                           juce::jmin (from, angle), juce::jmax (from, angle), true);
-        g.setColour (s.isEnabled() ? accent : muted);
-        g.strokePath (val, juce::PathStrokeType (thick, juce::PathStrokeType::curved, juce::PathStrokeType::butt));
-
-        auto body = r.reduced (thick * 1.7f);
-        g.setColour (raised);
-        g.fillEllipse (body);
-        g.setColour (line2);
-        g.drawEllipse (body, 1.0f);
-
-        juce::Path ptr;
-        const float pl = body.getWidth() * 0.32f;
-        ptr.addRoundedRectangle (-1.5f, -body.getHeight() * 0.5f + 3.0f, 3.0f, pl, 1.5f);
-        g.setColour (juce::Colour (0xfff2efe8));
-        g.fillPath (ptr, juce::AffineTransform::rotation (angle).translated (body.getCentreX(), body.getCentreY()));
-    }
-
-    void drawButtonBackground (juce::Graphics& g, juce::Button& b, const juce::Colour& bg, bool over, bool down) override
-    {
-        using namespace ArmColours;
-        auto r = b.getLocalBounds().toFloat().reduced (0.5f);
-        auto c = b.getToggleState() ? b.findColour (juce::TextButton::buttonOnColourId) : bg;
-        if (down) c = c.brighter (0.15f);
-        else if (over) c = c.brighter (0.06f);
-        g.setColour (c);
-        g.fillRoundedRectangle (r, 4.0f);
-        g.setColour (b.getToggleState() ? c : (over ? sodium.withAlpha (0.6f) : line2));
-        g.drawRoundedRectangle (r, 4.0f, 1.0f);
-    }
-
-    juce::Font getTextButtonFont (juce::TextButton&, int h) override { return juce::FontOptions (juce::jmin (13.0f, h * 0.5f), juce::Font::bold); }
-    juce::Font getComboBoxFont (juce::ComboBox&) override { return juce::FontOptions (13.0f, juce::Font::bold); }
-    juce::Font getPopupMenuFont() override { return juce::FontOptions (14.0f); }
-
-    void drawComboBox (juce::Graphics& g, int w, int h, bool, int, int, int, int, juce::ComboBox& box) override
-    {
-        using namespace ArmColours;
-        auto r = juce::Rectangle<float> (0, 0, (float) w, (float) h).reduced (0.5f);
-        g.setColour (raised); g.fillRoundedRectangle (r, 4.0f);
-        g.setColour (box.hasKeyboardFocus (true) ? sodium : line2); g.drawRoundedRectangle (r, 4.0f, 1.0f);
-        juce::Path arrow;
-        const float ax = (float) w - 14.0f, ay = (float) h * 0.5f;
-        arrow.addTriangle (ax - 4, ay - 2, ax + 4, ay - 2, ax, ay + 3);
-        g.setColour (sodium); g.fillPath (arrow);
-    }
-
-    void positionComboBoxText (juce::ComboBox& box, juce::Label& label) override
-    {
-        label.setBounds (6, 1, box.getWidth() - 24, box.getHeight() - 2);
-        label.setFont (getComboBoxFont (box));
-    }
+    ArmLnF() { mh::Form::setAccent (ArmColours::sodium); }
 };
 
 // Ratt med namn under och värde som visas när man skruvar.
@@ -178,11 +68,11 @@ public:
         using namespace ArmColours;
         auto r = getLocalBounds();
         auto bottom = r.removeFromBottom (26);
-        g.setColour (muted);
-        g.setFont (juce::FontOptions (9.5f));
+        g.setColour (mh::Form::ink3());
+        g.setFont (mh::Form::text (10.0f, false, 0.08f));
         g.drawText (sprak::tr (name), bottom.removeFromTop (12), juce::Justification::centred, true);
-        g.setColour (text);
-        g.setFont (juce::FontOptions (11.0f, juce::Font::bold));
+        g.setColour (mh::Form::ink2());
+        g.setFont (mh::Form::mono (10.5f));
         g.drawText (slider.getTextFromValue (slider.getValue()), bottom, juce::Justification::centred, true);
     }
 
@@ -195,27 +85,10 @@ private:
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> attachment;
 };
 
-// Rubrik + mörk ruta, återanvänds för alla paneler.
+// Rubrik + hårlinje (formspråket): inga kort, inga rundade lådor.
 inline void drawPanel (juce::Graphics& g, juce::Rectangle<int> r, const juce::String& title, const juce::String& sub = {})
 {
-    using namespace ArmColours;
-    g.setColour (panel);
-    g.fillRoundedRectangle (r.toFloat(), 6.0f);
-    g.setColour (line);
-    g.drawRoundedRectangle (r.toFloat().reduced (0.5f), 6.0f, 1.0f);
-    if (title.isNotEmpty())
-    {
-        auto t = r.reduced (12, 8).removeFromTop (16);
-        g.setColour (text);
-        g.setFont (juce::FontOptions (13.0f, juce::Font::bold));
-        g.drawText (sprak::tr (title), t, juce::Justification::centredLeft, true);
-        if (sub.isNotEmpty())
-        {
-            g.setColour (muted);
-            g.setFont (juce::FontOptions (10.0f));
-            g.drawText (sprak::tr (sub), t, juce::Justification::centredRight, true);
-        }
-    }
+    if (title.isNotEmpty()) mh::Form::section (g, r.reduced (2, 2), sprak::tr (title).toUpperCase(), sprak::tr (sub));
 }
 
 // Liten ratt för spårremsorna: namn under, värdet visas medan man skruvar.
@@ -246,8 +119,8 @@ public:
     void paint (juce::Graphics& g) override
     {
         using namespace ArmColours;
-        g.setColour (dragging ? text : muted);
-        g.setFont (juce::FontOptions (9.0f, dragging ? juce::Font::bold : juce::Font::plain));
+        g.setColour (dragging ? mh::Form::ink() : mh::Form::ink3());
+        g.setFont (dragging ? mh::Form::mono (9.5f) : mh::Form::text (9.5f, false, 0.08f));
         g.drawText (dragging ? slider.getTextFromValue (slider.getValue()) : sprak::tr (name), getLocalBounds().removeFromBottom (11), juce::Justification::centred, false);
     }
     void resized() override { slider.setBounds (getLocalBounds().withTrimmedBottom (11)); }
@@ -302,12 +175,12 @@ public:
         auto r = getLocalBounds().toFloat().reduced (1.0f);
         const float s = std::min (r.getWidth(), r.getHeight());
         auto b = juce::Rectangle<float> (s, s).withCentre (r.getCentre());
-        g.setColour (down ? accent : (over ? accent.withAlpha (0.35f) : raised));
-        g.fillRoundedRectangle (b, s * 0.22f);
-        g.setColour (over || down ? accent : line2);
-        g.drawRoundedRectangle (b.reduced (0.5f), s * 0.22f, 1.0f);
-        g.setColour (down ? ArmColours::ground : (over ? ArmColours::text : accent));
-        const float d = s * 0.17f;
+        // formspråket: bara en hårfin kontur och små prickar. Lyser upp när man håller över.
+        b = b.reduced (s * 0.12f);
+        g.setColour (over || down ? mh::Form::hair2().brighter (0.3f) : mh::Form::hair2());
+        g.drawRect (b, 1.0f);
+        g.setColour (down ? mh::Form::accent() : (over ? mh::Form::ink() : mh::Form::ink3()));
+        const float d = s * 0.11f;
         auto dot = [&] (float x, float y) { g.fillEllipse (b.getX() + b.getWidth() * x - d * 0.5f, b.getY() + b.getHeight() * y - d * 0.5f, d, d); };
         const int f = face;
         if (f % 2 == 1) dot (0.5f, 0.5f);
