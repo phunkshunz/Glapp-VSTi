@@ -25,6 +25,10 @@ GlappProcessor::GlappProcessor()
     pIlMode = apvts.getRawParameterValue ("ilmode");
     pProv = apvts.getRawParameterValue ("prov");
     pProvNiva = apvts.getRawParameterValue ("provniva");
+    pKit = apvts.getRawParameterValue ("kit");
+    pMuller = apvts.getRawParameterValue ("muller");
+    pTryck = apvts.getRawParameterValue ("tryck");
+    pMorker = apvts.getRawParameterValue ("morker");
     pSpela = apvts.getRawParameterValue ("spela");
     pTempo = apvts.getRawParameterValue ("tempo");
 
@@ -144,6 +148,10 @@ void GlappProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiB
 
     const bool provOn = pProv->load() > 0.5f;
     const float provLevel = pProvNiva->load();
+    prov.kit.store (juce::roundToInt (pKit->load()), std::memory_order_relaxed);
+    prov.muller.store (pMuller->load(), std::memory_order_relaxed);
+    prov.tryck.store (pTryck->load(), std::memory_order_relaxed);
+    prov.morker.store (pMorker->load(), std::memory_order_relaxed);
     auto* L = buffer.getWritePointer (0);
     auto* R = buffer.getNumChannels() > 1 ? buffer.getWritePointer (1) : L;
     int rendered = 0;

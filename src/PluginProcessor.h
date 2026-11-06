@@ -4,7 +4,7 @@
 #include "Params.h"
 #include "Engine.h"
 #include "Dice.h"
-#include "Prov.h"
+#include "Tung.h"
 
 class GlappProcessor : public juce::AudioProcessor
 {
@@ -70,11 +70,12 @@ private:
         std::atomic<float>* p[17] {};
     };
     std::array<RawTrack, gl::NT> raw;
+    std::atomic<float> *pKit = nullptr, *pMuller = nullptr, *pTryck = nullptr, *pMorker = nullptr;
     std::atomic<float> *pSlap, *pHuman, *pTomrum, *pFolj, *pIl, *pIlMode, *pProv, *pProvNiva, *pSpela, *pTempo;
     std::atomic<uint32_t> seed { 1 };
 
     gl::Engine engine;
-    gl::Prov prov;
+    gl::Tung prov;   // TUNGT: samplingarna (förut det syntade provljudet)
     std::vector<gl::NoteEv> events;
 
     struct PendingOff { int note, channel; int64_t at; };

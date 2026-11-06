@@ -1,4 +1,5 @@
 #pragma once
+#include "Tung.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "Model.h"
@@ -67,7 +68,16 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     L.add (std::make_unique<AudioParameterBool> (ParameterID { "interlock", 1 }, "INTERLOCK", true));
     L.add (std::make_unique<AudioParameterChoice> (ParameterID { "ilmode", 1 }, U ("INTERLOCK LÄGE"), StringArray { U ("SPÖKE"), "FLYTTA", "TYST" }, 0));
     L.add (std::make_unique<AudioParameterChoice> (ParameterID { "stil", 1 }, "STIL", toSA (styleNames()), 0));
-    L.add (std::make_unique<AudioParameterBool> (ParameterID { "prov", 1 }, "PROVLJUD", false));
+    // LJUD: GLAPP spelar själv med tunga, mörka samplingar (sex kit). Av = bara MIDI ut, som förut.
+    L.add (std::make_unique<AudioParameterBool> (ParameterID { "prov", 1 }, "LJUD", true));
+    {
+        StringArray kits;
+        for (int k = 0; k < gl::kNumTungKits; ++k) kits.add (String::fromUTF8 (gl::kTungKits[k].name));
+        L.add (std::make_unique<AudioParameterChoice> (ParameterID { "kit", 1 }, "KIT", kits, 0));
+    }
+    L.add (std::make_unique<AudioParameterFloat> (ParameterID { "muller", 1 }, "MULLER", NormalisableRange<float> (0.0f, 1.0f), 0.35f, AudioParameterFloatAttributes().withStringFromValueFunction (pct)));
+    L.add (std::make_unique<AudioParameterFloat> (ParameterID { "tryck", 1 }, "TRYCK", NormalisableRange<float> (0.0f, 1.0f), 0.5f, AudioParameterFloatAttributes().withStringFromValueFunction (pct)));
+    L.add (std::make_unique<AudioParameterFloat> (ParameterID { "morker", 1 }, U ("MÖRKER"), NormalisableRange<float> (0.0f, 1.0f), 0.35f, AudioParameterFloatAttributes().withStringFromValueFunction (pct)));
     L.add (std::make_unique<AudioParameterFloat> (ParameterID { "provniva", 1 }, U ("PROVLJUD NIVÅ"), NormalisableRange<float> (0.0f, 1.0f, 0.01f), 0.7f,
                                                   AudioParameterFloatAttributes().withStringFromValueFunction (pct)));
     L.add (std::make_unique<AudioParameterBool> (ParameterID { "spela", 1 }, "SPELA", false));
