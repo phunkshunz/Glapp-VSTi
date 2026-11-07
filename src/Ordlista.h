@@ -105,5 +105,6 @@ inline constexpr Par kOrdlista[] =
     { "MULLER", "RUMBLE" },
     { "TRYCK", "PRESSURE" },
     { "MÖRKER", "DARKNESS" },
+    { "tunga samplingar", "heavy samples" },
 };
 } // namespace sprak

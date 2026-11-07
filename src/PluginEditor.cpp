@@ -387,8 +387,17 @@ GlappPanel::GlappPanel (GlappProcessor& p) : proc (p)
     human.slider.setTooltip (U ("Skalar all jitter."));
     tomrum.attach (s, "tomrum", "TOMRUM");
     tomrum.slider.setTooltip (U ("Groovet byggs av det som inte spelas. Stryker slag: hat och klick först, spöknoter före huvudslag, kicken aldrig. Samma slag försvinner alltid på samma ställe."));
-    provNiva.attach (s, "provniva", U ("PROV NIVÅ"));
-    provNiva.setAccent (cold);
+    provNiva.attach (s, "provniva", U ("NIVÅ"));
+    provNiva.slider.setTooltip (U ("Hur högt GLAPP spelar sina egna samplingar."));
+    kit.attach (s, "kit");
+    kit.setTooltip (U ("Sex tunga, mörka kit. De hårda presetsen väljer kit själva."));
+    muller.attach (s, "muller", "MULLER");
+    muller.slider.setTooltip (U ("Kicken genom ett mörkt betongrum, bara basen kvar och duckad av kicken: mullret under hård techno."));
+    tryck.attach (s, "tryck", "TRYCK");
+    tryck.slider.setTooltip (U ("Kicken klipps hårt, allt annat parallellkomprimeras och mättas. Mer = fläskigare och tätare."));
+    morker.attach (s, "morker", U ("MÖRKER"));
+    morker.slider.setTooltip (U ("Allt utom kicken tappar sin gnistrande diskant."));
+    for (auto* c : std::initializer_list<juce::Component*> { &kit, &muller, &tryck, &morker }) addAndMakeVisible (*c);
     folj.attach (s, "foljtempo");
     folj.setTooltip (U ("Släppet är inställt för 122 BPM och följer med tempot, så att känslan blir densamma."));
     interlock.attach (s, "interlock");
@@ -405,7 +414,7 @@ GlappPanel::GlappPanel (GlappProcessor& p) : proc (p)
     addChildComponent (about);
     selectLane (selected);
 
-    setSize (1240, 790);
+    setSize (1120, 680);
     startTimerHz (30);
 }
 
@@ -484,6 +493,8 @@ void GlappPanel::paint (juce::Graphics& g)
 
     drawPanel (g, urArea, "URVERKET", U ("hur spåren glider isär"));
     drawPanel (g, grooveArea, "GROOVE");
+    drawPanel (g, ljudArea, "LJUD", U ("tunga samplingar"));
+    label (g, { kit.getX(), kit.getY() - 13, 120, 12 }, "KIT");
     drawPanel (g, shopArea, U ("VERKSTAD  ·  ") + U (roleName (selected)), U ("klick = på/av · dra = velocity · scroll = tonhöjd · shift = spöknot · högerklick = rensa steg"));
 
     label (g, { stil.getX(), stil.getY() - 13, 120, 12 }, "STIL");
@@ -499,83 +510,91 @@ void GlappPanel::paint (juce::Graphics& g)
 
 void GlappPanel::resized()
 {
+    // 1120 x 680 (förut 1240 x 790)
     auto r = getLocalBounds().reduced (12);
-    r.removeFromTop (2);
     about.setBounds (getLocalBounds());
 
     // toppen
-    topArea = r.removeFromTop (74);
+    topArea = r.removeFromTop (60);
     {
         auto t = topArea;
-        logo->setBounds (t.removeFromLeft (190));
-        t.removeFromLeft (10);
-        auto pr = t.removeFromLeft (330).withTrimmedTop (22).withHeight (32);
-        prevBtn.setBounds (pr.removeFromLeft (30));
+        logo->setBounds (t.removeFromLeft (168).withTrimmedTop (4));
+        t.removeFromLeft (8);
+        auto pr = t.removeFromLeft (296).withTrimmedTop (18).withHeight (30);
+        prevBtn.setBounds (pr.removeFromLeft (28));
         pr.removeFromLeft (4);
-        nextBtn.setBounds (pr.removeFromRight (30));
+        nextBtn.setBounds (pr.removeFromRight (28));
         pr.removeFromRight (4);
         presetBtn.setBounds (pr);
-        t.removeFromLeft (14);
-        stil.setBounds (t.removeFromLeft (130).withTrimmedTop (22).withHeight (32));
-        t.removeFromLeft (14);
-        auto db = t.removeFromLeft (230).withTrimmedTop (14).withHeight (46);
-        bigDice.setBounds (db.removeFromLeft (46).reduced (2));
+        t.removeFromLeft (12);
+        stil.setBounds (t.removeFromLeft (118).withTrimmedTop (18).withHeight (30));
+        t.removeFromLeft (12);
+        auto db = t.removeFromLeft (196).withTrimmedTop (10).withHeight (42);
+        bigDice.setBounds (db.removeFromLeft (42).reduced (2));
         db.removeFromLeft (6);
         diceAllBtn.setBounds (db);
         t.removeFromLeft (10);
-        auto ob = t.removeFromLeft (120);
-        orbitBtn.setBounds (ob.withTrimmedTop (14).withHeight (22));
-        undoBtn.setBounds (ob.withTrimmedTop (40).withHeight (20));
-        t.removeFromLeft (10);
-        tempo.setBounds (t.removeFromRight (64));
-        auto tg = t.removeFromRight (100);
-        spela.setBounds (tg.withTrimmedTop (14).withHeight (22));
-        prov.setBounds (tg.withTrimmedTop (40).withHeight (20));
+        auto ob = t.removeFromLeft (108);
+        orbitBtn.setBounds (ob.withTrimmedTop (10).withHeight (21));
+        undoBtn.setBounds (ob.withTrimmedTop (34).withHeight (19));
+        t.removeFromLeft (8);
+        tempo.setBounds (t.removeFromRight (58));
+        auto tg = t.removeFromRight (90);
+        spela.setBounds (tg.withTrimmedTop (10).withHeight (21));
+        prov.setBounds (tg.withTrimmedTop (34).withHeight (19));
     }
-    r.removeFromTop (10);
+    r.removeFromTop (8);
 
     // verkstaden längst ner
-    shopArea = r.removeFromBottom (112);
+    shopArea = r.removeFromBottom (104);
     {
-        auto s = shopArea.reduced (14, 10).withTrimmedTop (26);
-        auto combos = s.removeFromLeft (660);
-        const int cw = 104;
+        auto s = shopArea.reduced (12, 6).withTrimmedTop (22);
+        auto combos = s.removeFromLeft (606);
         for (auto* c : { &takt, &orbit, &orbTakt, &hand, &handTakt, &ackord })
         {
-            c->setBounds (combos.removeFromLeft (cw).withTrimmedTop (16).withHeight (26));
+            c->setBounds (combos.removeFromLeft (96).withTrimmedTop (18).withHeight (26));
             combos.removeFromLeft (6);
         }
-        s.removeFromLeft (16);
-        rensa.setBounds (s.removeFromRight (80).withTrimmedTop (16).withHeight (26));
-        s.removeFromRight (10);
+        s.removeFromLeft (14);
+        rensa.setBounds (s.removeFromRight (76).withTrimmedTop (18).withHeight (26));
+        s.removeFromRight (8);
         const int kw = s.getWidth() / 5;
-        for (auto* k : { &note, &kanal, &niva, &chans, &gate }) k->setBounds (s.removeFromLeft (kw).withSizeKeepingCentre (70, 76));
+        for (auto* k : { &note, &kanal, &niva, &chans, &gate }) k->setBounds (s.removeFromLeft (kw).withSizeKeepingCentre (juce::jmin (64, kw), s.getHeight()));
     }
-    r.removeFromBottom (10);
+    r.removeFromBottom (8);
 
-    // höger kolumn
-    rightArea = r.removeFromRight (350);
-    grooveArea = rightArea.removeFromBottom (150);
-    rightArea.removeFromBottom (10);
+    // höger kolumn: URVERKET, LJUD, GROOVE
+    rightArea = r.removeFromRight (292);
+    grooveArea = rightArea.removeFromBottom (132);
+    rightArea.removeFromBottom (8);
+    ljudArea = rightArea.removeFromBottom (136);
+    rightArea.removeFromBottom (8);
     urArea = rightArea;
-    urverk->setBounds (urArea.reduced (12).withTrimmedTop (22));
+    urverk->setBounds (urArea.reduced (8).withTrimmedTop (18));
     {
-        auto g = grooveArea.reduced (12, 8).withTrimmedTop (22);
-        auto knobs = g.removeFromLeft (224);
-        for (auto* k : { &slap, &human, &tomrum, &provNiva }) k->setBounds (knobs.removeFromLeft (56).withSizeKeepingCentre (56, 80));
-        g.removeFromLeft (8);
-        folj.setBounds (g.removeFromTop (24));
+        auto l = ljudArea.reduced (10, 6).withTrimmedTop (20);
+        kit.setBounds (l.removeFromTop (34).withTrimmedTop (12).withHeight (22).withWidth (150));
+        l.removeFromTop (4);
+        const int w = l.getWidth() / 4;
+        for (auto* k : { &provNiva, &muller, &tryck, &morker }) k->setBounds (l.removeFromLeft (w).withSizeKeepingCentre (juce::jmin (62, w), l.getHeight()));
+    }
+    {
+        auto g = grooveArea.reduced (10, 6).withTrimmedTop (20);
+        auto knobs = g.removeFromLeft (174);
+        for (auto* k : { &slap, &human, &tomrum }) k->setBounds (knobs.removeFromLeft (58).withSizeKeepingCentre (58, g.getHeight()));
+        g.removeFromLeft (6);
+        folj.setBounds (g.removeFromTop (22));
         g.removeFromTop (4);
-        interlock.setBounds (g.removeFromTop (24));
-        g.removeFromTop (18);
-        ilMode.setBounds (g.removeFromTop (24));
+        interlock.setBounds (g.removeFromTop (22));
+        g.removeFromTop (16);
+        ilMode.setBounds (g.removeFromTop (22));
     }
 
     // spåren
     r.removeFromRight (10);
     laneArea = r;
     const int h = r.getHeight() / NT;
-    for (auto& l : lanes) l->setBounds (r.removeFromTop (h).reduced (0, 2));
+    for (auto& l : lanes) l->setBounds (r.removeFromTop (h).reduced (0, 1));
 }
 
 //==============================================================================
@@ -592,7 +611,7 @@ GlappEditor::GlappEditor (GlappProcessor& p) : AudioProcessorEditor (&p), proc (
         juce::MessageManager::callAsync ([self] { if (self != nullptr) self->byggPanel(); });
     };
     addAndMakeVisible (sprakKnapp);
-    setSize (1240, 790);
+    setSize (1120, 680);
 }
 
 GlappEditor::~GlappEditor() = default;

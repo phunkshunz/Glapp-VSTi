@@ -35,7 +35,7 @@ private:
     ParamCombo stil;
     juce::TextButton diceAllBtn { juce::String::fromUTF8 ("DICE  ·  MUTERA") }, orbitBtn { "ORBIT EVOLVE" }, undoBtn { juce::String::fromUTF8 ("ÅNGRA") };
     DiceButton bigDice;
-    ParamToggle spela { "SPELA" }, prov { "PROVLJUD" };
+    ParamToggle spela { "SPELA" }, prov { "LJUD" };
     Knob tempo;
 
     // spåren
@@ -45,6 +45,10 @@ private:
     // höger: urverket och groove
     std::unique_ptr<Urverket> urverk;
     Knob slap, human, tomrum, provNiva;
+    // LJUD: kit och MÖRKERSTEGET
+    ParamCombo kit;
+    Knob muller, tryck, morker;
+    juce::Rectangle<int> ljudArea;
     ParamToggle folj { juce::String::fromUTF8 ("FÖLJ TEMPO") }, interlock { "INTERLOCK" };
     ParamCombo ilMode;
 
