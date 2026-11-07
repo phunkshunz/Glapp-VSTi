@@ -68,9 +68,11 @@ enum IlMode { IlSpoke, IlFlytta, IlTyst };
 inline const std::vector<std::string>& ilNames() { static const std::vector<std::string> v { "SPOKE", "FLYTTA", "TYST" }; return v; }
 
 // De fyra första är GLAPP 1. KÖLN, KLINISK och RASTER kom i v2 (sist i listan, så att gamla projekt laddar rätt).
-enum Style { SRominimal, SBerlin, SDub, SOrganisk, SKoln, SKlinisk, SRaster };
-constexpr int NSTYLES = 7;
-inline const std::vector<std::string>& styleNames() { static const std::vector<std::string> v { "BUKAREST", "BERLIN", "MIKRODUB", "ORGANISK", "KÖLN", "KLINISK", "RASTER" }; return v; }
+// De sju första är glesa och minimala (GLAPP 1-2). De fyra sista hamrar (GLAPP 3).
+enum Style { SRominimal, SBerlin, SDub, SOrganisk, SKoln, SKlinisk, SRaster, SHammare, SIndustri, SHypnos, SStok };
+constexpr int NSTYLES = 11;
+inline bool isHard (int style) { return style >= SHammare; }
+inline const std::vector<std::string>& styleNames() { static const std::vector<std::string> v { "BUKAREST", "BERLIN", "MIKRODUB", "ORGANISK", "KÖLN", "KLINISK", "RASTER", "HAMMARE", "INDUSTRI", "HYPNOS", "STÖK" }; return v; }
 
 // ---------------------------------------------------------------- mönstret
 // Ett steg: velocity (0 = av) och tonhöjd i halvtoner (för BAS/ACKORD).

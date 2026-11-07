@@ -96,5 +96,14 @@ inline constexpr Par kOrdlista[] =
     { "HÄNDELSE TAKT", "EVENT BARS" },
     { "PROVLJUD NIVÅ", "PREVIEW LEVEL" },
     { "EGET (tärnat)", "CUSTOM (rolled)" },
+    { "HAMMARE", "HAMMER" },
+    { "INDUSTRI", "INDUSTRY" },
+    { "HYPNOS", "HYPNOSIS" },
+    { "STÖK", "MESS" },
+    { "LJUD", "SOUND" },
+    { "KIT", "KIT" },
+    { "MULLER", "RUMBLE" },
+    { "TRYCK", "PRESSURE" },
+    { "MÖRKER", "DARKNESS" },
 };
 } // namespace sprak

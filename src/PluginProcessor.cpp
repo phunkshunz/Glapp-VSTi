@@ -37,7 +37,7 @@ GlappProcessor::GlappProcessor()
     engine.pat = &pattern;
 
     // Startläge: första Bukarest-presetet, så att det låter direkt.
-    loadPreset (0);
+    loadPreset (SHammare * PRESETS_PER_STYLE);   // nya GLAPP startar på HAMMARE 01: mörkt och hårt från första slaget
     undoStack.clear();
 
     // Som fristående app finns ingen DAW: då startar GLAPP med eget ljud och egen klocka.
@@ -337,6 +337,12 @@ void GlappProcessor::loadPreset (int index)
     setParam ("interlock", gg.interlock ? 1.0f : 0.0f);
     setParam ("ilmode", (float) gg.ilMode);
     setParam ("tomrum", gg.tomrum);
+    // de hårda stilarna är kompletta paket: de väljer kit också (samma preset = samma kit, alltid)
+    if (isHard (style))
+    {
+        static const int kitFor[4][5] = { { 0, 1, 4, 0, 2 }, { 1, 3, 4, 1, 0 }, { 5, 2, 3, 5, 2 }, { 2, 0, 5, 3, 2 } };
+        setParam ("kit", (float) kitFor[style - SHammare][(index % PRESETS_PER_STYLE) % 5]);
+    }
     seed.store ((uint32_t) (presetSeed (index) & 0xffffffffu));
     currentPreset.store (index);
 }
