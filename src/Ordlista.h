@@ -35,6 +35,7 @@ inline constexpr Par kOrdlista[] =
     { "Groovet byggs av det som inte spelas. Stryker slag: hat och klick först, spöknoter före huvudslag, kicken aldrig. Samma slag försvinner alltid på samma ställe.", "The groove is built from what does not play. Removes hits: hat and click first, ghost notes before main hits, never the kick. The same hit always disappears in the same place." },
     { "PROV NIVÅ", "PREVIEW LEVEL" },
     { "Släppet är inställt för 122 BPM och följer med tempot, så att känslan blir densamma.", "The drag is tuned for 122 BPM and follows the tempo, so the feel stays the same." },
+    { "NAV: lyssna på BETONG. Alla spår svänger med BETONGs swing och släp, och INTERLOCK viker undan för BETONGs kick. Slå på NAV i BETONG också. Grön prick = GLAPP hör BETONG.", "NAV: listen to BETONG. All tracks swing with BETONG's swing and drag, and INTERLOCK steps aside for BETONG's kick. Turn on NAV in BETONG too. Green dot = GLAPP hears BETONG." },
     { "Två spår får aldrig slå exakt samtidigt. Spåret längre upp vinner, kicken vinner alltid.", "Two tracks never hit at exactly the same time. The track higher up wins, the kick always wins." },
     { "Vad som händer med förloraren: SPÖKE = svag spöknot, FLYTTA = en sen 32-del, TYST = tas bort.", "What happens to the loser: GHOST = soft ghost note, MOVE = a late 32nd, MUTE = removed." },
     { "Töm mönstret på valt spår.", "Clear the pattern on the selected track." },

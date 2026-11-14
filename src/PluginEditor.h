@@ -49,7 +49,8 @@ private:
     ParamCombo kit;
     Knob muller, tryck, morker;
     juce::Rectangle<int> ljudArea;
-    ParamToggle folj { juce::String::fromUTF8 ("FÖLJ TEMPO") }, interlock { "INTERLOCK" };
+    ParamToggle folj { juce::String::fromUTF8 ("FÖLJ TEMPO") }, interlock { "INTERLOCK" }, navBtn { "NAV" };
+    int navShown = -1;
     ParamCombo ilMode;
 
     // verkstaden för valt spår

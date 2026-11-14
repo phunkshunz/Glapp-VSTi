@@ -32,6 +32,19 @@ public:
     double bpm = 122.0;
     double barPpq = 4.0;
 
+    // NAV: BETONG berättar hur det svänger. on = false: allt som förut.
+    struct NavCfg { bool on = false; double swing = 0.0; double pocketMs = 0.0; uint32_t kickMask = 0; };
+    NavCfg nav;
+    // ligger BETONGs kick på just det här stället (en sextondel i takten)?
+    bool navKickAt (double ppq) const
+    {
+        if (! nav.on || nav.kickMask == 0) return false;
+        const double s16 = ppq * 4.0;
+        const double r = std::round (s16);
+        if (std::abs (s16 - r) > 1e-6) return false;
+        return ((nav.kickMask >> mod ((int64_t) r, 16)) & 1u) != 0;
+    }
+
     static int64_t floorDiv (int64_t a, int64_t b) { int64_t q = a / b; if ((a % b != 0) && ((a < 0) != (b < 0))) --q; return q; }
     static int mod (int64_t a, int b) { if (b <= 0) return 0; int r = (int) (a % b); return r < 0 ? r + b : r; }
     template <typename T> static T clampv (T v, T lo, T hi) { return v < lo ? lo : (v > hi ? hi : v); }
@@ -168,9 +181,16 @@ public:
         ms += (hash01 (g.seed, t, n, 2) * 2.0 - 1.0) * (double) c.jitter * (double) g.human;
         ms = clampv (ms, 0.0, 250.0) * tempoScale();
         double off = msToPpq (ms);
+        if (nav.on)
+        {
+            // BETONGs swing på udda sextondelar och BETONGs släp på allt
+            const double s16 = nom * 4.0, r = std::round (s16);
+            if (std::abs (s16 - r) < 1e-6 && (((int64_t) r) & 1) != 0) off += nav.swing * 0.5 * 0.25;
+            off += msToPpq (clampv (nav.pocketMs, 0.0, 60.0));
+        }
 
         int vel = (int) std::lround ((double) st.vel * (double) c.level);
-        if (g.interlock && c.role != RKick && collides (t, nom))
+        if (g.interlock && c.role != RKick && (collides (t, nom) || navKickAt (nom)))
         {
             if (g.ilMode == IlTyst) return;
             if (g.ilMode == IlSpoke) vel = 18 + (int) (hash01 (g.seed, t, n, 3) * 17.0);   // spöknot 18..35

@@ -5,12 +5,13 @@
 #include "Engine.h"
 #include "Dice.h"
 #include "Tung.h"
+#include "Nav.h"
 
-class GlappProcessor : public juce::AudioProcessor
+class GlappProcessor : public juce::AudioProcessor, private juce::Timer
 {
 public:
     GlappProcessor();
-    ~GlappProcessor() override = default;
+    ~GlappProcessor() override { stopTimer(); }
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
@@ -58,8 +59,14 @@ public:
     std::atomic<bool> uiPlaying { false };
     std::array<std::atomic<int>, gl::NT> uiHits {};
     std::atomic<int> currentPreset { -1 };
+    std::atomic<int> navStatus { 0 };   // NAV: 0 av, 1 väntar på BETONG, 2 hör BETONG
 
 private:
+    void timerCallback() override;
+    mh::Nav nav;
+    std::atomic<bool> navReady { false };
+    bool navTried = false;
+    std::atomic<float>* pNav = nullptr;
     void setParam (const juce::String& id, float value);
     void applyTrack (int t, const gl::TrackGen& g);
     juce::ValueTree snapshot();

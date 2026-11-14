@@ -407,7 +407,9 @@ GlappPanel::GlappPanel (GlappProcessor& p) : proc (p)
     interlock.setTooltip (U ("Två spår får aldrig slå exakt samtidigt. Spåret längre upp vinner, kicken vinner alltid."));
     ilMode.attach (s, "ilmode");
     ilMode.setTooltip (U ("Vad som händer med förloraren: SPÖKE = svag spöknot, FLYTTA = en sen 32-del, TYST = tas bort."));
-    for (auto* c : std::initializer_list<juce::Component*> { &slap, &human, &tomrum, &provNiva, &folj, &interlock, &ilMode }) addAndMakeVisible (*c);
+    navBtn.attach (s, "nav");
+    navBtn.setTooltip (U ("NAV: lyssna på BETONG. Alla spår svänger med BETONGs swing och släp, och INTERLOCK viker undan för BETONGs kick. Slå på NAV i BETONG också. Grön prick = GLAPP hör BETONG."));
+    for (auto* c : std::initializer_list<juce::Component*> { &slap, &human, &tomrum, &provNiva, &folj, &interlock, &ilMode, &navBtn }) addAndMakeVisible (*c);
 
     rensa.setTooltip (U ("Töm mönstret på valt spår."));
     rensa.onClick = [this] { proc.clearLane (selected); };
@@ -472,6 +474,7 @@ void GlappPanel::showPresetMenu()
 
 void GlappPanel::timerCallback()
 {
+    if (const int ns = proc.navStatus.load(); ns != navShown) { navShown = ns; repaint (grooveArea); }
     proc.readConfig (view);
     view.bpm = proc.uiBpm.load();
     view.barPpq = proc.uiBarPpq.load();
@@ -496,6 +499,11 @@ void GlappPanel::paint (juce::Graphics& g)
 
     drawPanel (g, urArea, "URVERKET", U ("hur spåren glider isär"));
     drawPanel (g, grooveArea, "GROOVE");
+    if (navShown > 0)
+    {
+        g.setColour (navShown == 2 ? juce::Colour (0xff5fd36a) : juce::Colour (0xff7a6a3a));
+        g.fillEllipse ((float) navBtn.getX() - 12.f, (float) navBtn.getBounds().getCentreY() - 3.5f, 7.f, 7.f);
+    }
     drawPanel (g, ljudArea, "LJUD", U ("tunga samplingar"));
     label (g, { kit.getX(), kit.getY() - 13, 120, 12 }, "KIT");
     drawPanel (g, shopArea, U ("VERKSTAD  ·  ") + U (roleName (selected)), U ("klick = på/av · dra = velocity · scroll = tonhöjd · shift = spöknot · högerklick = rensa steg"));
@@ -582,6 +590,7 @@ void GlappPanel::resized()
         for (auto* k : { &provNiva, &muller, &tryck, &morker }) k->setBounds (l.removeFromLeft (w).withSizeKeepingCentre (juce::jmin (62, w), l.getHeight()));
     }
     {
+        navBtn.setBounds (grooveArea.getRight() - 54, grooveArea.getY() + 5, 46, 17);
         auto g = grooveArea.reduced (10, 6).withTrimmedTop (20);
         auto knobs = g.removeFromLeft (174);
         for (auto* k : { &slap, &human, &tomrum }) k->setBounds (knobs.removeFromLeft (58).withSizeKeepingCentre (58, g.getHeight()));

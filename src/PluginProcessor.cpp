@@ -31,6 +31,8 @@ GlappProcessor::GlappProcessor()
     pMorker = apvts.getRawParameterValue ("morker");
     pSpela = apvts.getRawParameterValue ("spela");
     pTempo = apvts.getRawParameterValue ("tempo");
+    pNav = apvts.getRawParameterValue ("nav");
+    startTimerHz (5);
 
     pending.reserve (512);
     events.reserve (512);
@@ -46,6 +48,13 @@ GlappProcessor::GlappProcessor()
         setParam ("prov", 1.0f);
         setParam ("spela", 1.0f);
     }
+}
+
+// NAV öppnas här, aldrig i ljudtråden
+void GlappProcessor::timerCallback()
+{
+    if (pNav->load() > 0.5f && ! navTried) { navTried = true; navReady.store (nav.open()); }
+    else if (pNav->load() <= 0.5f && ! navReady.load()) navTried = false;
 }
 
 bool GlappProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
@@ -136,6 +145,26 @@ void GlappProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiB
 
     engine.bpm = bpm;
     engine.barPpq = barPpq;
+    // NAV: BETONGs swing, släp och kick
+    {
+        Engine::NavCfg nc;
+        int status = 0;
+        if (pNav->load() > 0.5f)
+        {
+            status = 1;
+            if (navReady.load() && nav.alive (juce::Time::currentTimeMillis()))
+                if (auto* st = nav.state(); st != nullptr && st->playing != 0)
+                {
+                    status = 2;
+                    nc.on = true;
+                    nc.swing = juce::jlimit (0.0, 0.75, (double) st->swing);
+                    nc.pocketMs = juce::jlimit (0.0, 60.0, (double) st->pocketMs);
+                    nc.kickMask = st->kickSteps & 0xFFFFu;
+                }
+        }
+        engine.nav = nc;
+        navStatus.store (status);
+    }
     const double ppqPerSample = bpm / 60.0 / sr;
     const double end = ppq + n * ppqPerSample;
 

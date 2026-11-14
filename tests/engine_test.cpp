@@ -3,6 +3,7 @@
 
 #include "Engine.h"
 #include "Dice.h"
+#include "Engine_old.h"
 #include <cassert>
 #include <cstdio>
 #include <set>
@@ -165,6 +166,43 @@ int main()
     std::set<std::string> names;
     for (int i = 0; i < NUM_PRESETS; ++i) names.insert (presetName (i));
     CHECK ((int) names.size() == NUM_PRESETS);
+
+    // NAV av = exakt som förut, för alla presets
+    for (int p = 0; p < NUM_PRESETS; ++p)
+    {
+        Pattern pp; Engine a; a.pat = &pp; applyPreset (p, pp, a);
+        gl_old::Engine b; b.pat = &pp; b.tr = a.tr; b.g = a.g; b.bpm = a.bpm = 128.0;
+        std::vector<NoteEv> ea; std::vector<gl_old::NoteEv> eb;
+        a.collect (0.0, 64.0, ea); b.collect (0.0, 64.0, eb);
+        bool same = ea.size() == eb.size();
+        for (size_t i = 0; same && i < ea.size(); ++i) same = ea[i].ppq == eb[i].ppq && ea[i].note == eb[i].note && ea[i].vel == eb[i].vel && ea[i].gatePpq == eb[i].gatePpq;
+        CHECK (same);
+    }
+    // NAV på: BETONGs swing flyttar udda sextondelar, släppet flyttar allt, och BETONGs kick ger interlock
+    {
+        Pattern pp; Engine a; a.pat = &pp; a.bpm = 120.0; a.g.slap = 0.0f; a.g.human = 0.0f; a.g.followTempo = false;
+        for (int t = 0; t < NT; ++t) a.tr[(size_t) t].mute = t != RHat;
+        a.tr[RHat].role = RHat; a.tr[RHat].div = D16; a.tr[RHat].length = 16; a.tr[RHat].note = 42;
+        for (int i = 0; i < 16; ++i) pp.set (RHat, i, Step { 100, 0 });
+        std::vector<NoteEv> off, on;
+        a.collect (0.0, 4.0, off);
+        a.nav.on = true; a.nav.swing = 0.6; a.nav.pocketMs = 10.0; a.nav.kickMask = 0;
+        a.collect (0.0, 4.5, on);
+        CHECK (off.size() == 16 && on.size() >= 16);
+        if (off.size() == 16 && on.size() >= 16)
+        {
+            const double pk = 10.0 / 1000.0 * 120.0 / 60.0;
+            CHECK (std::abs (on[0].ppq - (off[0].ppq + pk)) < 1e-9);
+            CHECK (std::abs (on[1].ppq - (off[1].ppq + pk + 0.6 * 0.125)) < 1e-9);
+        }
+        // kicken på 1, 5, 9, 13: hi-hatten där blir spöknot (interlock SPÖKE)
+        a.nav.swing = 0.0; a.nav.pocketMs = 0.0; a.nav.kickMask = 0x1111u; a.g.interlock = true; a.g.ilMode = IlSpoke;
+        std::vector<NoteEv> il;
+        a.collect (0.0, 4.0, il);
+        int ghosts = 0; for (auto& ev : il) if (ev.vel <= 35) ++ghosts;
+        CHECK (ghosts == 4);
+        std::printf ("NAV: %zu noter, %d spöknoter på BETONGs kick\n", il.size(), ghosts);
+    }
 
     std::printf (fails == 0 ? "ALLT OK\n" : "%d FEL\n", fails);
     return fails == 0 ? 0 : 1;
