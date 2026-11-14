@@ -73,7 +73,7 @@ public:
     void paint (juce::Graphics& g) override
     {
         auto r = getLocalBounds().toFloat();
-        const auto col = mh::Form::ink();
+        const auto col = ArmColours::lane (t);   // spårets egen färg
         const float cw = r.getWidth() / (float) len;
         const int cur = (int) std::floor (head);
 
@@ -88,12 +88,12 @@ public:
             {
                 const float h = c.getHeight() * (0.18f + 0.82f * (float) st.vel / 127.0f);
                 auto bar = c.withTop (c.getBottom() - h);
-                g.setColour (st.vel < 40 ? mh::Form::ink3() : col.withAlpha (0.92f));
+                g.setColour (st.vel < 40 ? col.withAlpha (0.45f) : col.withAlpha (0.95f));
                 g.fillRect (bar);
                 // var noten faktiskt landar: en tunn linje förskjuten med släpet
                 const float ox = c.getX() + juce::jlimit (0.0f, 1.0f, offs[(size_t) i]) * cw;
-                g.setColour (mh::Form::accent().withAlpha (0.9f));
-                g.fillRect (juce::Rectangle<float> (ox, c.getY() - 3.0f, 1.0f, 3.0f));
+                g.setColour (mh::Form::ink());
+                g.fillRect (juce::Rectangle<float> (ox, c.getY() - 3.0f, 1.5f, 3.0f));
                 if (st.pitch != 0 && cw > 11.0f)
                 {
                     g.setColour (mh::Form::bg());
@@ -103,8 +103,11 @@ public:
             }
             if (playing && i == cur)
             {
+                // spelhuvudet: orange slöja över rutan och en tydlig orange list under
+                g.setColour (mh::Form::accent().withAlpha (0.28f));
+                g.fillRect (c);
                 g.setColour (mh::Form::accent());
-                g.fillRect (juce::Rectangle<float> (c.getX(), c.getBottom() + 2.0f, c.getWidth(), 1.5f));
+                g.fillRect (juce::Rectangle<float> (c.getX(), c.getBottom() + 1.0f, c.getWidth(), 3.0f));
             }
         }
     }
@@ -294,7 +297,7 @@ public:
         {
             const auto& r = rings[(size_t) t];
             const float rad = rMin + (rMax - rMin) * ((float) t + 0.5f) / (float) NT;
-            const auto col = mh::Form::ink().withMultipliedAlpha (r.mute ? 0.25f : (t % 2 ? 0.7f : 1.0f));
+            const auto col = ArmColours::lane (t).withMultipliedAlpha (r.mute ? 0.25f : 1.0f);
             g.setColour (mh::Form::hair());
             g.drawEllipse (c.x - rad, c.y - rad, rad * 2, rad * 2, 1.0f);
             for (int i = 0; i < r.len; ++i)
