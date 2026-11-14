@@ -26,8 +26,8 @@ namespace mh
 struct Form
 {
     // ---------------------------------------------------------------- färger
-    static constexpr juce::uint32 kBg = 0xff0b0b0c, kPanel = 0xff0e0e0f, kRaised = 0xff151517, kCell = 0xff18181a,
-                                  kHair = 0xff1f1f22, kHair2 = 0xff2b2b2f, kInk = 0xffe8e5de, kInk2 = 0xffa29f98, kInk3 = 0xff65635e;
+    static constexpr juce::uint32 kBg = 0xff121314, kPanel = 0xff1a1c1e, kRaised = 0xff232527, kCell = 0xff26292c,
+                                  kHair = 0xff2c2f32, kHair2 = 0xff3d4246, kInk = 0xffe6e3dc, kInk2 = 0xffb9b6ae, kInk3 = 0xff8b8e91;
     static juce::Colour bg()     { return juce::Colour (kBg); }
     static juce::Colour panel()  { return juce::Colour (kPanel); }
     static juce::Colour raised() { return juce::Colour (kRaised); }
@@ -37,7 +37,7 @@ struct Form
     static juce::Colour ink()    { return juce::Colour (kInk); }
     static juce::Colour ink2()   { return juce::Colour (kInk2); }
     static juce::Colour ink3()   { return juce::Colour (kInk3); }
-    static juce::Colour& accentRef() { static juce::Colour a { 0xffff5b36 }; return a; }
+    static juce::Colour& accentRef() { static juce::Colour a { 0xffff8a1f }; return a; }
     static juce::Colour accent() { return accentRef(); }
     static void setAccent (juce::Colour c) { accentRef() = c; }
 
@@ -113,20 +113,20 @@ struct Form
             const bool lit = bipolar ? ((t >= 0.5f && t <= pos + 1.0e-4f) || (t <= 0.5f && t >= pos - 1.0e-4f)) : t <= pos + 1.0e-4f;
             const float dr = juce::jmax (1.0f, size * 0.022f);
             const auto p = c.getPointOnCircumference (rad - dr * 1.5f, a);
-            g.setColour (! enabled ? hair2() : (lit ? ink2() : hair2()));
+            g.setColour (! enabled ? hair2() : (lit ? acc : hair2()));
             g.fillEllipse (juce::Rectangle<float> (dr * 2, dr * 2).withCentre (p));
         }
         // locket: mattsvart med en hårfin kant och lite ljus uppifrån
         const auto cap = juce::Rectangle<float> (capR * 2, capR * 2).withCentre (c);
-        g.setGradientFill (juce::ColourGradient (juce::Colour (0xff1d1d20), cap.getX(), cap.getY(), juce::Colour (0xff0d0d0e), cap.getX(), cap.getBottom(), false));
+        g.setGradientFill (juce::ColourGradient (juce::Colour (0xff2e3134), cap.getX(), cap.getY(), juce::Colour (0xff1b1d1f), cap.getX(), cap.getBottom(), false));
         g.fillEllipse (cap);
-        g.setColour (juce::Colour (0xff2e2e33));
+        g.setColour (juce::Colour (0xff4a4f54));
         g.drawEllipse (cap.reduced (0.5f), 1.0f);
         // visaren
         const auto p0 = c.getPointOnCircumference (capR * 0.30f, angle);
         const auto p1 = c.getPointOnCircumference (capR * 0.92f, angle);
         const bool hot = enabled && (bipolar ? std::abs (pos - 0.5f) > 0.35f : pos > 0.85f);
-        g.setColour (! enabled ? ink3() : (hot ? acc : ink()));
+        g.setColour (! enabled ? ink3() : ink());
         g.drawLine ({ p0, p1 }, juce::jmax (1.6f, size * 0.045f));
     }
 
@@ -136,11 +136,12 @@ struct Form
         r = r.reduced (0.5f);
         g.setColour (down ? raised().brighter (0.06f) : (over ? raised() : panel()));
         g.fillRect (r);
-        g.setColour (on ? hair2().brighter (0.25f) : (over ? hair2().brighter (0.15f) : hair2()));
+        if (on && enabled) { g.setColour (accent().withAlpha (0.16f)); g.fillRect (r); }
+        g.setColour (on && enabled ? accent() : (over ? hair2().brighter (0.15f) : hair2()));
         g.drawRect (r, 1.0f);
         if (on && enabled)
         {
-            const float d = 4.0f;
+            const float d = 5.0f;
             g.setColour (accent());
             g.fillEllipse (r.getX() + 7.0f, r.getCentreY() - d * 0.5f, d, d);
         }

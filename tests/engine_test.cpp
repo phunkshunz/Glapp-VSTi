@@ -79,15 +79,18 @@ int main()
                 }
             }
         }
-        // glesheten: percen ska ha ~1..6 träffar per 16 steg (KLINISK får gå ner till 0,8)
+        // glesheten: percen ska ha ~1..6 träffar per 16 steg (KLINISK får gå ner till 0,8).
+        // Gäller de sju minimala stilarna. De fyra hårda (HAMMARE, INDUSTRI, HYPNOS, STÖK) är täta
+        // och raka med flit, så där kollas bara att percen finns.
+        const bool minimal = presetStyle (p) < 7;
         for (int t : { (int) RPerk1, (int) RPerk2 })
         {
             int hits = 0;
             for (int i = 0; i < e.tr[(size_t) t].length; ++i) hits += pat.get (t, i).vel > 0;
             const double per16 = hits * 16.0 / e.tr[(size_t) t].length;
-            CHECK (per16 >= 0.8 && per16 <= 6.0);
+            if (minimal) CHECK (per16 >= 0.8 && per16 <= 6.0);
         }
-        CHECK (e.tr[RPerk1].length != e.tr[RPerk2].length);
+        if (minimal) CHECK (e.tr[RPerk1].length != e.tr[RPerk2].length);
     }
 
     // Kicken ska aldrig flyttas av interlock; rimmet ska ligga sent

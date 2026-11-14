@@ -5,7 +5,8 @@
 #include "Sprak.h"
 #include "Formsprak.h"
 
-// Utseende: MASKINHALLENS formspråk (Formsprak.h). Minimal svart, en signalfärg.
+// Utseende: MASKINHALLENS grundschema. Mörk kolgrå, natriumorange och kallt turkos.
+// Formen (typsnitt, rattar, knappar) kommer från Formsprak.h.
 namespace ArmColours
 {
 const juce::Colour ground   { mh::Form::kBg };
@@ -15,16 +16,28 @@ const juce::Colour line     { mh::Form::kHair };
 const juce::Colour line2    { mh::Form::kHair2 };
 const juce::Colour text     { mh::Form::kInk };
 const juce::Colour muted    { mh::Form::kInk3 };
-const juce::Colour sodium   { 0xffff5b36 };   // GLAPP: signalröd, bara för det som är på eller spelar
-const juce::Colour sodiumDk { 0xffb8402a };
-const juce::Colour cold     { mh::Form::kInk };
-const juce::Colour coldDk   { mh::Form::kInk2 };
-const juce::Colour concrete { mh::Form::kInk2 };
-const juce::Colour steel    { mh::Form::kInk3 };
+const juce::Colour sodium   { 0xffff8a1f };   // natriumorange: på, spelar, vald
+const juce::Colour sodiumDk { 0xffc96a16 };
+const juce::Colour cold     { 0xff4fd1e0 };   // turkos
+const juce::Colour coldDk   { 0xff2ea7b5 };
+const juce::Colour concrete { 0xffb9b6ae };
+const juce::Colour steel    { 0xff8b8e91 };
 
-// lådorna och spåren: svartvitt. Färg betyder något (på, spelar, vald), inte vilket spår det är.
-inline juce::Colour box (int b) { return (b % 2) == 0 ? text : coldDk; }
-inline juce::Colour lane (int i) { return (i % 2) == 0 ? text : juce::Colour (0xffc4c1ba); }
+// lådornas färger: en färg per låda så man ser vad som är vad
+inline juce::Colour box (int b)
+{
+    static const juce::Colour c[] = { juce::Colour (0xffff8a1f), juce::Colour (0xff4fd1e0), juce::Colour (0xffffc24a),
+                                      juce::Colour (0xff8fd19a), juce::Colour (0xffe58fb0), juce::Colour (0xffb0a4d6) };
+    return c[(size_t) (((b % 6) + 6) % 6)];
+}
+
+// spårens färger: varje spår har sin egen
+inline juce::Colour lane (int i)
+{
+    static const juce::Colour c[] = { juce::Colour (0xfff2efe8), juce::Colour (0xffff8a1f), juce::Colour (0xffffc24a), juce::Colour (0xff4fd1e0),
+                                      juce::Colour (0xff8fd19a), juce::Colour (0xffe58fb0), juce::Colour (0xff7fa6c4), juce::Colour (0xffb0a4d6) };
+    return c[(size_t) (((i % 8) + 8) % 8)];
+}
 } // namespace ArmColours
 
 // All svensk text går genom utf8(): den blir engelsk när EN är valt.
