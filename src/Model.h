@@ -64,6 +64,63 @@ inline Intervals chordIntervals (int c)
     }
 }
 
+// TONART och SKALA (GLAPP 3.4). "NOT" = som förut: spåret spelar sin egen NOT rakt av.
+inline const std::vector<std::string>& keyNames() { static const std::vector<std::string> v { "NOT", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" }; return v; }
+inline const std::vector<std::string>& scaleNames() { static const std::vector<std::string> v { "FRI", "MOLL", "FRYGISK", "DORISK", "HARM. MOLL", "PENTA", "LOKRISK" }; return v; }
+constexpr int NSCALES = 7;
+struct ScaleDef { int n; int s[7]; };
+inline const ScaleDef& scaleDef (int sc)
+{
+    static const ScaleDef d[] = {
+        { 7, { 0, 2, 3, 5, 7, 8, 10 } },   // FRI: tärningen räknar som moll
+        { 7, { 0, 2, 3, 5, 7, 8, 10 } },   // MOLL
+        { 7, { 0, 1, 3, 5, 7, 8, 10 } },   // FRYGISK
+        { 7, { 0, 2, 3, 5, 7, 9, 10 } },   // DORISK
+        { 7, { 0, 2, 3, 5, 7, 8, 11 } },   // HARM. MOLL
+        { 5, { 0, 3, 5, 7, 10 } },         // PENTA (moll)
+        { 7, { 0, 1, 3, 5, 6, 8, 10 } },   // LOKRISK
+    };
+    return d[(sc < 0 || sc >= NSCALES) ? 0 : sc];
+}
+// Skalsteg -> halvtoner (steg kan vara negativa och gå över oktaven)
+inline int degreeToSemis (int deg, int sc)
+{
+    const auto& d = scaleDef (sc);
+    const int o = (deg >= 0 ? deg / d.n : -((-deg + d.n - 1) / d.n));
+    const int i = deg - o * d.n;
+    return o * 12 + d.s[i];
+}
+// Närmaste skalton (vid lika avstånd: den lägre)
+inline int snapToScale (int semis, int sc)
+{
+    if (sc <= 0) return semis;
+    const auto& d = scaleDef (sc);
+    const int o = (semis >= 0 ? semis / 12 : -((-semis + 11) / 12));
+    const int pc = semis - o * 12;
+    int best = 0, bd = 99;
+    for (int k = -1; k <= d.n; ++k)
+    {
+        const int tone = k < 0 ? d.s[d.n - 1] - 12 : (k == d.n ? 12 : d.s[k]);
+        const int dist = std::abs (pc - tone);
+        if (dist < bd) { bd = dist; best = tone; }
+    }
+    return o * 12 + best;
+}
+// Tonen ett spår spelar: spårets NOT, flyttad till tonartens grundton (närmast under),
+// plus stegets tonhöjd och ackordtonen, fästa i skalan.
+inline int keyedNote (int base, int pitch, int interval, int key, int scale, bool inKey)
+{
+    if (! inKey || (key <= 0 && scale <= 0)) return base + pitch + interval;
+    int root = base;
+    if (key > 0)
+    {
+        const int pc = key - 1;
+        const int d = ((base - pc) % 12 + 12) % 12;
+        root = base - d + (d > 6 ? 12 : 0);
+    }
+    return root + snapToScale (pitch + interval, scale);
+}
+
 enum IlMode { IlSpoke, IlFlytta, IlTyst };
 inline const std::vector<std::string>& ilNames() { static const std::vector<std::string> v { "SPOKE", "FLYTTA", "TYST" }; return v; }
 
@@ -154,6 +211,7 @@ struct TrackCfg
     int event = EAv;
     int eventBars = 3;    // index i barsNames
     int chord = CEn;
+    bool inKey = false;   // följer TONART och SKALA (BAS och ACKORD från start)
 };
 
 struct GlobalCfg
@@ -165,6 +223,8 @@ struct GlobalCfg
     int ilMode = IlSpoke;
     float tomrum = 0.0f;  // 0..1, stryker slag (kicken rörs aldrig)
     uint32_t seed = 1;
+    int key = 0;          // 0 = NOT, 1..12 = C..B
+    int scale = 0;        // 0 = FRI
 };
 
 // TOMRUM: hur gärna en roll tappar slag. Hat och klick går först, kicken aldrig.

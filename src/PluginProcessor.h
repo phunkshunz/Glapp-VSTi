@@ -46,6 +46,8 @@ public:
     void diceAll();                                  // DICE: alla spår som inte är frysta
     void diceLane (int t);                           // tärningen på ett spår
     void orbitEvolve();                              // nya rörelser, samma mönster
+    void riffLane (int t);                           // RIFF: nytt riff i tonarten på ett spår
+    void riffAll();                                  // RIFF på BAS, ACKORD och spår i tonart
     void loadPreset (int index);
     void clearLane (int t);
     bool undo();
@@ -67,6 +69,7 @@ private:
     std::atomic<bool> navReady { false };
     bool navTried = false;
     std::atomic<float>* pNav = nullptr;
+    std::atomic<float> *pKey = nullptr, *pScale = nullptr;
     void setParam (const juce::String& id, float value);
     void applyTrack (int t, const gl::TrackGen& g);
     juce::ValueTree snapshot();
@@ -74,7 +77,7 @@ private:
 
     struct RawTrack
     {
-        std::atomic<float>* p[17] {};
+        std::atomic<float>* p[18] {};
     };
     std::array<RawTrack, gl::NT> raw;
     std::atomic<float> *pKit = nullptr, *pMuller = nullptr, *pTryck = nullptr, *pMorker = nullptr;

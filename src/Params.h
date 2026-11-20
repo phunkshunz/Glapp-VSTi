@@ -56,7 +56,11 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
         L.add (std::make_unique<AudioParameterChoice> (ParameterID { tid (t, "hand"), 1 }, pre + U ("HÄNDELSE"), toSA (eventNames()), 0));
         L.add (std::make_unique<AudioParameterChoice> (ParameterID { tid (t, "handtakt"), 1 }, pre + U ("HÄNDELSE TAKT"), toSA (barsNames()), 3));
         L.add (std::make_unique<AudioParameterChoice> (ParameterID { tid (t, "ackord"), 1 }, pre + "ACKORD", toSA (chordNames()), 0));
+        L.add (std::make_unique<AudioParameterBool> (ParameterID { tid (t, "iton"), 1 }, pre + "I TONART", t == RBas || t == RAckord));
     }
+    // TONART och SKALA: NOT + FRI = som förut
+    L.add (std::make_unique<AudioParameterChoice> (ParameterID { "tonart", 1 }, "TONART", toSA (keyNames()), 0));
+    L.add (std::make_unique<AudioParameterChoice> (ParameterID { "skala", 1 }, "SKALA", toSA (scaleNames()), 0));
 
     L.add (std::make_unique<AudioParameterFloat> (ParameterID { "slap", 1 }, U ("SLÄP"), NormalisableRange<float> (0.0f, 2.0f, 0.01f), 1.0f,
                                                   AudioParameterFloatAttributes().withStringFromValueFunction (pct)));

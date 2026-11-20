@@ -400,7 +400,11 @@ GlappPanel::GlappPanel (GlappProcessor& p) : proc (p)
     tryck.slider.setTooltip (U ("Kicken klipps hårt, allt annat parallellkomprimeras och mättas. Mer = fläskigare och tätare."));
     morker.attach (s, "morker", U ("MÖRKER"));
     morker.slider.setTooltip (U ("Allt utom kicken tappar sin gnistrande diskant."));
-    for (auto* c : std::initializer_list<juce::Component*> { &kit, &muller, &tryck, &morker }) addAndMakeVisible (*c);
+    tonart.attach (s, "tonart");
+    tonart.setTooltip (U ("Tonart för spår som är I TONART (BAS och ACKORD från start). NOT = varje spår spelar sin egen NOT som förut."));
+    skala.attach (s, "skala");
+    skala.setTooltip (U ("Skala: tonerna fästs i skalan, så att inget kan låta fel. FRI = halvtonerna som de står."));
+    for (auto* c : std::initializer_list<juce::Component*> { &kit, &muller, &tryck, &morker, &tonart, &skala }) addAndMakeVisible (*c);
     folj.attach (s, "foljtempo");
     folj.setTooltip (U ("Släppet är inställt för 122 BPM och följer med tempot, så att känslan blir densamma."));
     interlock.attach (s, "interlock");
@@ -413,7 +417,12 @@ GlappPanel::GlappPanel (GlappProcessor& p) : proc (p)
 
     rensa.setTooltip (U ("Töm mönstret på valt spår."));
     rensa.onClick = [this] { proc.clearLane (selected); };
-    for (auto* c : std::initializer_list<juce::Component*> { &takt, &orbit, &orbTakt, &hand, &handTakt, &ackord, &note, &kanal, &niva, &chans, &gate, &rensa })
+    riffBtn.setColour (juce::TextButton::buttonColourId, sodiumDk);
+    riffBtn.setColour (juce::TextButton::textColourOffId, text);
+    riffBtn.setTooltip (U ("Nytt riff i tonarten på valt spår: basgång på BAS, stötar på ACKORD, melodislinga på övriga. Skift-klick = riff på BAS, ACKORD och alla spår i tonart."));
+    riffBtn.onClick = [this] { if (juce::ModifierKeys::currentModifiers.isShiftDown()) proc.riffAll(); else proc.riffLane (selected); };
+    iton.setTooltip (U ("Spåret följer TONART och SKALA. Slå på för att spela melodier på vilket spår som helst."));
+    for (auto* c : std::initializer_list<juce::Component*> { &takt, &orbit, &orbTakt, &hand, &handTakt, &ackord, &note, &kanal, &niva, &chans, &gate, &rensa, &riffBtn, &iton })
         addAndMakeVisible (*c);
 
     addChildComponent (about);
@@ -445,6 +454,7 @@ void GlappPanel::selectLane (int t)
     niva.attach (s, tid (t, "niva"), U ("NIVÅ"));
     chans.attach (s, tid (t, "chans"), "CHANS");
     gate.attach (s, tid (t, "gate"), U ("NOTLÄNGD"));
+    iton.attach (s, tid (t, "iton"));
     takt.setTooltip (U ("Stegets längd. Trioler (T) skaver mot raka spår."));
     orbit.setTooltip (U ("Rörelse över tid. STEG +/− vrider mönstret ett steg, GLID låter släppet andas fram och tillbaka."));
     orbTakt.setTooltip (U ("Hur ofta orbit flyttar, i takter."));
@@ -505,7 +515,9 @@ void GlappPanel::paint (juce::Graphics& g)
         g.fillEllipse ((float) navBtn.getX() - 12.f, (float) navBtn.getBounds().getCentreY() - 3.5f, 7.f, 7.f);
     }
     drawPanel (g, ljudArea, "LJUD", U ("tunga samplingar"));
-    label (g, { kit.getX(), kit.getY() - 13, 120, 12 }, "KIT");
+    label (g, { kit.getX(), kit.getY() - 13, 110, 12 }, "KIT");
+    label (g, { tonart.getX(), tonart.getY() - 13, 58, 12 }, U ("TONART"));
+    label (g, { skala.getX(), skala.getY() - 13, 94, 12 }, U ("SKALA"));
     drawPanel (g, shopArea, U ("VERKSTAD  ·  ") + U (roleName (selected)), U ("klick = på/av · dra = velocity · scroll = tonhöjd · shift = spöknot · högerklick = rensa steg"));
 
     label (g, { stil.getX(), stil.getY() - 13, 120, 12 }, "STIL");
@@ -567,8 +579,14 @@ void GlappPanel::resized()
             combos.removeFromLeft (6);
         }
         s.removeFromLeft (14);
-        rensa.setBounds (s.removeFromRight (76).withTrimmedTop (18).withHeight (26));
-        s.removeFromRight (8);
+        rensa.setBounds (s.removeFromRight (70).withTrimmedTop (18).withHeight (26));
+        s.removeFromRight (6);
+        {
+            auto rc = s.removeFromRight (78);
+            riffBtn.setBounds (rc.withTrimmedTop (4).withHeight (26));
+            iton.setBounds (rc.withTrimmedTop (36).withHeight (20));
+        }
+        s.removeFromRight (6);
         const int kw = s.getWidth() / 5;
         for (auto* k : { &note, &kanal, &niva, &chans, &gate }) k->setBounds (s.removeFromLeft (kw).withSizeKeepingCentre (juce::jmin (64, kw), s.getHeight()));
     }
@@ -584,7 +602,14 @@ void GlappPanel::resized()
     urverk->setBounds (urArea.reduced (8).withTrimmedTop (18));
     {
         auto l = ljudArea.reduced (10, 6).withTrimmedTop (20);
-        kit.setBounds (l.removeFromTop (34).withTrimmedTop (12).withHeight (22).withWidth (150));
+        {
+            auto row = l.removeFromTop (34).withTrimmedTop (12).withHeight (22);
+            kit.setBounds (row.removeFromLeft (112));
+            row.removeFromLeft (6);
+            tonart.setBounds (row.removeFromLeft (58));
+            row.removeFromLeft (6);
+            skala.setBounds (row.removeFromLeft (94));
+        }
         l.removeFromTop (4);
         const int w = l.getWidth() / 4;
         for (auto* k : { &provNiva, &muller, &tryck, &morker }) k->setBounds (l.removeFromLeft (w).withSizeKeepingCentre (juce::jmin (62, w), l.getHeight()));

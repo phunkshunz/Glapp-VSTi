@@ -5,9 +5,9 @@ using namespace gl;
 
 namespace
 {
-const char* kKeys[17] = { "tyst", "frys", "langd", "takt", "not", "kanal", "niva", "drag", "trog",
-                          "jitter", "chans", "gate", "orbit", "orbtakt", "hand", "handtakt", "ackord" };
-enum K { KTyst, KFrys, KLangd, KTakt, KNot, KKanal, KNiva, KDrag, KTrog, KJitter, KChans, KGate, KOrbit, KOrbTakt, KHand, KHandTakt, KAckord };
+const char* kKeys[18] = { "tyst", "frys", "langd", "takt", "not", "kanal", "niva", "drag", "trog",
+                          "jitter", "chans", "gate", "orbit", "orbtakt", "hand", "handtakt", "ackord", "iton" };
+enum K { KTyst, KFrys, KLangd, KTakt, KNot, KKanal, KNiva, KDrag, KTrog, KJitter, KChans, KGate, KOrbit, KOrbTakt, KHand, KHandTakt, KAckord, KITon };
 }
 
 GlappProcessor::GlappProcessor()
@@ -15,7 +15,7 @@ GlappProcessor::GlappProcessor()
       apvts (*this, nullptr, "GLAPP", createLayout())
 {
     for (int t = 0; t < NT; ++t)
-        for (int k = 0; k < 17; ++k)
+        for (int k = 0; k < 18; ++k)
             raw[(size_t) t].p[k] = apvts.getRawParameterValue (tid (t, kKeys[k]));
     pSlap = apvts.getRawParameterValue ("slap");
     pHuman = apvts.getRawParameterValue ("human");
@@ -32,6 +32,8 @@ GlappProcessor::GlappProcessor()
     pSpela = apvts.getRawParameterValue ("spela");
     pTempo = apvts.getRawParameterValue ("tempo");
     pNav = apvts.getRawParameterValue ("nav");
+    pKey = apvts.getRawParameterValue ("tonart");
+    pScale = apvts.getRawParameterValue ("skala");
     startTimerHz (5);
 
     pending.reserve (512);
@@ -96,6 +98,7 @@ void GlappProcessor::readConfig (Engine& e) const
         c.event = juce::roundToInt (r.p[KHand]->load());
         c.eventBars = juce::roundToInt (r.p[KHandTakt]->load());
         c.chord = juce::roundToInt (r.p[KAckord]->load());
+        c.inKey = r.p[KITon]->load() > 0.5f;
     }
     e.g.slap = pSlap->load();
     e.g.human = pHuman->load();
@@ -104,6 +107,8 @@ void GlappProcessor::readConfig (Engine& e) const
     e.g.interlock = pIl->load() > 0.5f;
     e.g.ilMode = juce::roundToInt (pIlMode->load());
     e.g.seed = seed.load();
+    e.g.key = juce::roundToInt (pKey->load());
+    e.g.scale = juce::roundToInt (pScale->load());
     e.pat = &pattern;
 }
 
@@ -314,6 +319,36 @@ void GlappProcessor::diceLane (int t)
     Rng r ((uint64_t) juce::Random::getSystemRandom().nextInt64());
     const int avoid = t == RPerk1 ? cur.tr[RPerk2].length : (t == RPerk2 ? cur.tr[RPerk1].length : 0);
     applyTrack (t, diceTrack (t, style, r, cur.tr[(size_t) t], avoid));
+    currentPreset.store (-1);
+}
+
+// RIFF: ett nytt riff i tonarten på ett spår (BAS ger basgång, ACKORD stötar, övriga en melodislinga).
+// Spåret slås på I TONART så att riffet hörs i rätt tonart.
+void GlappProcessor::riffLane (int t)
+{
+    pushUndo();
+    Engine cur;
+    readConfig (cur);
+    const int style = juce::roundToInt (apvts.getRawParameterValue ("stil")->load());
+    Rng r ((uint64_t) juce::Random::getSystemRandom().nextInt64());
+    applyTrack (t, riffTrack (t, style, r, cur.tr[(size_t) t], cur.g.scale));
+    setParam (tid (t, "iton"), 1.0f);
+    currentPreset.store (-1);
+}
+
+void GlappProcessor::riffAll()
+{
+    pushUndo();
+    Engine cur;
+    readConfig (cur);
+    const int style = juce::roundToInt (apvts.getRawParameterValue ("stil")->load());
+    Rng r ((uint64_t) juce::Random::getSystemRandom().nextInt64());
+    for (int t = 0; t < NT; ++t)
+    {
+        if (apvts.getRawParameterValue (tid (t, "frys"))->load() > 0.5f) continue;
+        if (! (t == RBas || t == RAckord || cur.tr[(size_t) t].inKey)) continue;
+        applyTrack (t, riffTrack (t, style, r, cur.tr[(size_t) t], cur.g.scale));
+    }
     currentPreset.store (-1);
 }
 

@@ -7,6 +7,20 @@ namespace sprak
 {
 inline constexpr Par kOrdlista[] =
 {
+    { "TONART", "KEY" },
+    { "SKALA", "SCALE" },
+    { "I TONART", "IN KEY" },
+    { "RIFF", "RIFF" },
+    { "FRI", "FREE" },
+    { "MOLL", "MINOR" },
+    { "FRYGISK", "PHRYGIAN" },
+    { "DORISK", "DORIAN" },
+    { "HARM. MOLL", "HARM. MINOR" },
+    { "LOKRISK", "LOCRIAN" },
+    { "Tonart för spår som är I TONART (BAS och ACKORD från start). NOT = varje spår spelar sin egen NOT som förut.", "Key for tracks that are IN KEY (BASS and CHORD from the start). NOTE = every track plays its own NOTE as before." },
+    { "Skala: tonerna fästs i skalan, så att inget kan låta fel. FRI = halvtonerna som de står.", "Scale: notes snap to the scale so nothing can sound wrong. FREE = semitones as written." },
+    { "Nytt riff i tonarten på valt spår: basgång på BAS, stötar på ACKORD, melodislinga på övriga. Skift-klick = riff på BAS, ACKORD och alla spår i tonart.", "A new riff in key on the selected track: a bassline on BASS, stabs on CHORD, a melodic loop on the others. Shift-click = riffs on BASS, CHORD and every track in key." },
+    { "Spåret följer TONART och SKALA. Slå på för att spela melodier på vilket spår som helst.", "The track follows KEY and SCALE. Turn on to play melodies on any track." },
     { "Visa ", "Show " },
     { " i verkstaden", " in the workshop" },
     { "LÄNGD", "LENGTH" },

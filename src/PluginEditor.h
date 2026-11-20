@@ -46,7 +46,7 @@ private:
     std::unique_ptr<Urverket> urverk;
     Knob slap, human, tomrum, provNiva;
     // LJUD: kit och MÖRKERSTEGET
-    ParamCombo kit;
+    ParamCombo kit, tonart, skala;
     Knob muller, tryck, morker;
     juce::Rectangle<int> ljudArea;
     ParamToggle folj { juce::String::fromUTF8 ("FÖLJ TEMPO") }, interlock { "INTERLOCK" }, navBtn { "NAV" };
@@ -56,7 +56,8 @@ private:
     // verkstaden för valt spår
     ParamCombo takt, orbit, orbTakt, hand, handTakt, ackord;
     Knob note, kanal, niva, chans, gate;
-    juce::TextButton rensa { "RENSA" };
+    juce::TextButton rensa { "RENSA" }, riffBtn { "RIFF" };
+    ParamToggle iton { "I TONART" };
 
     juce::Rectangle<int> topArea, laneArea, rightArea, shopArea, grooveArea, urArea;
     AboutOverlay about { "GLAPP", utf8 ("MIDI-maskin för mikrosläp och fasdrift") + " · v2.1" };

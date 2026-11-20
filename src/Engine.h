@@ -219,7 +219,7 @@ public:
                 gg = reps > 1 ? std::min (gate, step / 3.0 * 0.8) : gate;
             }
             for (int i : iv)
-                out.push_back ({ p, t, clampv (c.note + st.pitch + i, 0, 127), clampv (c.channel, 1, 16), v, gg });
+                out.push_back ({ p, t, clampv (keyedNote (c.note, st.pitch, i, g.key, g.scale, c.inKey), 0, 127), clampv (c.channel, 1, 16), v, gg });
         }
     }
 

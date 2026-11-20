@@ -575,6 +575,99 @@ inline GlobalGen diceGlobal (int style, Rng& r)
 // ---------------------------------------------------------------- 550 presets
 // 11 stilar x 50. Varje preset är ett fast frö till tärningen, så de är alltid desamma.
 // Nummer 0-349 är desamma som i GLAPP 2, 0-199 som i GLAPP 1. 350-549 är de hårda stilarna.
+// ---------------------------------------------------------------- RIFF (GLAPP 3.4)
+// Ett riff i tonarten: en kort cell som upprepas och varieras (A A A B), så att det
+// låter som en basgång eller en hook och inte som slump. Tonhöjden skrivs i halvtoner
+// ur vald skala, så att den låter rätt även om SKALA sedan ändras.
+inline TrackGen riffTrack (int role, int style, Rng& r, const TrackCfg& cur, int scale)
+{
+    TrackGen g;
+    auto& c = g.cfg;
+    c = cur;
+    c.role = role;
+    c.orbit = OAv; c.event = EAv;
+    for (auto& st : g.steps) st = {};
+    const bool hard = isHard (style);
+    const int sc = scale <= 0 ? 1 : scale;
+    auto semi = [&] (int deg) { return degreeToSemis (deg, sc); };
+    auto put = [&] (int i, int v, int p) { if (i >= 0 && i < MAXS) g.steps[(size_t) i] = { std::clamp (v, 1, 127), std::clamp (p, -24, 24) }; };
+
+    if (role == RAckord)
+    {
+        // Ackordstötar: en eller två per takt på offbeat, roten vandrar i en mörk följd
+        c.div = D16; c.length = 32; c.chord = r.pick ({ (int) CMoll7, (int) CMoll9, (int) CDub, (int) CKvart });
+        static const int prog[][2] = { { 0, 0 }, { 0, 5 }, { 0, 3 }, { 0, -2 }, { 0, 4 }, { 5, 3 } };
+        const auto& pr = prog[r.range (0, 5)];
+        const int posA = r.pick ({ 3, 6, 7, 10 }), posB = r.pick ({ 11, 14, 15 });
+        const bool two = r.chance (hard ? 0.7 : 0.45);
+        for (int bar = 0; bar < 2; ++bar)
+        {
+            const int root = semi (pr[bar]);
+            put (bar * 16 + posA, r.range (80, 100), root);
+            if (two) put (bar * 16 + posB, r.range (64, 82), root);
+        }
+        c.gate = hard ? r.rangef (0.15f, 0.3f) : r.rangef (0.3f, 0.6f);
+        c.drag = hard ? r.rangef (0.0f, 8.0f) : r.rangef (8.0f, 24.0f);
+        c.chance = 1.0f;
+        return g;
+    }
+
+    // Basgång eller melodislinga: celler om fyra sextondelar
+    c.div = D16;
+    c.length = r.chance (0.55) ? 32 : 16;
+    static const int masks[][4] = {
+        { 0, 0, 1, 0 }, { 0, 1, 1, 0 }, { 0, 0, 1, 1 }, { 0, 1, 0, 1 }, { 0, 1, 1, 1 }, { 1, 0, 1, 0 }, { 0, 0, 0, 1 }, { 1, 0, 0, 1 } };
+    // hårda stilar rullar mer, glesa stilar andas mer
+    auto pickMask = [&] { return hard ? r.pick ({ 1, 2, 3, 4, 4 }) : r.pick ({ 0, 0, 1, 2, 6, 7 }); };
+    const int mA = pickMask(), mB = pickMask(), mC = pickMask();
+    const bool melodic = role != RBas;
+    const int oct = melodic ? 12 : 0;
+    // cellens toner i skalsteg: mest grundton, ibland kvint, septima, oktav eller ett steg under
+    auto cellNotes = [&] (int variant, int (&out)[4])
+    {
+        for (int k = 0; k < 4; ++k)
+        {
+            int deg = 0;
+            if (variant == 0) deg = r.pick ({ 0, 0, 0, 0, 7, -1 });
+            else if (variant == 1) deg = r.pick ({ 0, 2, 4, 6, -1, 7 });
+            else deg = r.pick ({ 4, 3, 6, -2, 2 });
+            out[k] = deg;
+        }
+    };
+    int nA[4], nB[4], nC[4];
+    cellNotes (0, nA); cellNotes (1, nB); cellNotes (2, nC);
+    const int accentAt = r.range (0, 3);
+    auto writeCell = [&] (int at, int mask, const int (&deg)[4], int jump)
+    {
+        for (int k = 0; k < 4; ++k)
+        {
+            if (! masks[mask][k]) continue;
+            const int v = k == accentAt ? r.range (104, 120) : r.range (78, 96);
+            int p = semi (deg[k]) + oct + jump;
+            if (melodic && p > 24) p -= 12;
+            put (at + k, v, p);
+        }
+    };
+    const int cells = c.length / 4;
+    for (int i = 0; i < cells; ++i)
+    {
+        const int pos = i % 4;
+        if (pos < 3)
+        {
+            // A A A, med en oktavhopp ibland i andra cellen (acid-känsla)
+            const int jump = (pos == 1 && hard && r.chance (0.35)) ? 12 : 0;
+            writeCell (i * 4, mA, nA, jump);
+        }
+        else writeCell (i * 4, (i / 4) % 2 == 0 ? mB : mC, (i / 4) % 2 == 0 ? nB : nC, 0);
+    }
+    c.gate = melodic ? r.rangef (0.2f, 0.45f) : (hard ? r.rangef (0.25f, 0.45f) : r.rangef (0.35f, 0.6f));
+    c.drag = hard ? r.rangef (2.0f, 12.0f) : r.rangef (6.0f, 22.0f);
+    c.inertia = hard ? 0.05f : r.rangef (0.05f, 0.25f);
+    c.jitter = r.rangef (0.5f, 2.0f);
+    c.chance = 1.0f;
+    return g;
+}
+
 constexpr int PRESETS_PER_STYLE = 50;
 constexpr int NUM_PRESETS = NSTYLES * PRESETS_PER_STYLE;
 inline int presetStyle (int i) { return std::clamp (i / PRESETS_PER_STYLE, 0, NSTYLES - 1); }
