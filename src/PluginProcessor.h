@@ -71,7 +71,7 @@ private:
     std::atomic<float>* pNav = nullptr;
     std::atomic<float>* pMotor = nullptr;
     mh::NavMotor navMotor;
-    void foljMotorn (Engine& e, int n);
+    void foljMotorn (gl::Engine& e, int n);
     std::atomic<float> *pKey = nullptr, *pScale = nullptr;
     void setParam (const juce::String& id, float value);
     void applyTrack (int t, const gl::TrackGen& g);
