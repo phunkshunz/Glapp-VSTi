@@ -89,6 +89,7 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
                                                   AudioParameterFloatAttributes().withStringFromValueFunction ([] (float v, int) { return String (v, 1) + " BPM"; })));
     // NAV: lyssna på BETONG (swing, släp och var kicken slår)
     L.add (std::make_unique<AudioParameterBool> (ParameterID { "nav", 1 }, "NAV", false));
+    L.add (std::make_unique<AudioParameterBool> (ParameterID { "motor", 1 }, "Motor", true));   // 3.5: följ motorn i BETONG (kräver NAV)
     return L;
 }
 } // namespace gl

@@ -12,6 +12,9 @@
 
 namespace mh
 {
+// Delarna i en låt, samma för alla maskiner
+enum Fas : int32_t { FasIngen = 0, FasIntro, FasBygg, FasTopp, FasBreak, FasLyft, FasUtrull };
+
 class Nav
 {
 public:
@@ -33,7 +36,14 @@ public:
         double lastKickPpq;                  // senaste kicken, för sidechain
         uint32_t kickSteps;                  // takten som 16 bitar: var kicken slår
         float kickEnv;                       // 0..1, faller efter varje kick (sidechain-kurva)
-        char pad[32];
+        // LÅTLÄGE (NAV 2): motorn berättar var i låten vi är. Ryms i den gamla utfyllnaden,
+        // så äldre läsare påverkas inte.
+        int32_t motorOn;                     // 1 = motorn bygger låten just nu
+        int32_t fas;                         // Fas nedan
+        float energy;                        // 0..1
+        float fasPos;                        // 0..1 genom delen
+        float toNextBars;                    // takter till nästa del
+        char pad[12];
     };
 
     static juce::File file()
@@ -78,5 +88,44 @@ public:
 
 private:
     std::unique_ptr<juce::MemoryMappedFile> map;
+};
+
+// Läsarens hjälp: mjuka värden att styra ljudet med, i ljudtråden. Uppdatera en gång per block.
+//   lift  0..1 stiger mot droppet (uppbyggnad och lyft)
+//   brk   0..1 i breaket
+//   drop  0..1 slår till när droppet kommer och klingar av på ett par takter
+//   energy 0..1 låtens energi
+// active = false när ingen motor skriver (då ska maskinen låta exakt som förut).
+struct NavMotor
+{
+    bool active = false;
+    int fas = FasIngen;
+    float energy = 0.5f, lift = 0.0f, brk = 0.0f, drop = 0.0f;
+
+    void update (const Nav& nav, int64_t nowMs, double blockSeconds) noexcept
+    {
+        const auto* s = nav.state();
+        const bool on = s != nullptr && nav.alive (nowMs) && s->playing != 0 && s->motorOn != 0;
+        float tLift = 0.0f, tBrk = 0.0f, tE = 0.5f;
+        int f = FasIngen;
+        if (on)
+        {
+            f = s->fas;
+            tE = juce::jlimit (0.0f, 1.0f, s->energy);
+            const float p = juce::jlimit (0.0f, 1.0f, s->fasPos);
+            if (f == FasLyft) tLift = 0.3f + 0.7f * p * p;
+            else if (f == FasBygg) tLift = 0.6f * p;
+            if (f == FasBreak) tBrk = 1.0f;
+            if (f == FasTopp && (fas == FasLyft || fas == FasBreak || fas == FasBygg)) drop = 1.0f;   // droppet!
+        }
+        active = on;
+        fas = f;
+        const float a = (float) juce::jlimit (0.0, 1.0, blockSeconds / 0.25);   // ~0,25 s glidning
+        energy += (tE - energy) * a;
+        lift += (tLift - lift) * a;
+        brk += (tBrk - brk) * (float) juce::jlimit (0.0, 1.0, blockSeconds / 0.08);
+        drop *= (float) std::exp (-blockSeconds / 1.5);   // klingar av på några sekunder
+        if (! on) { lift = 0.0f; brk = 0.0f; drop = 0.0f; energy = 0.5f; }
+    }
 };
 } // namespace mh

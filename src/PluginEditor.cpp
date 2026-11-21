@@ -412,8 +412,10 @@ GlappPanel::GlappPanel (GlappProcessor& p) : proc (p)
     ilMode.attach (s, "ilmode");
     ilMode.setTooltip (U ("Vad som händer med förloraren: SPÖKE = svag spöknot, FLYTTA = en sen 32-del, TYST = tas bort."));
     navBtn.attach (s, "nav");
+    motorBtn.attach (s, "motor");
+    motorBtn.setTooltip (U ("MOTOR: följ motorn i BETONG (kräver NAV). Glest i introt och breaket, tätare i uppbyggnaden och fullt i droppet. Kicken rörs aldrig."));
     navBtn.setTooltip (U ("NAV: lyssna på BETONG. Alla spår svänger med BETONGs swing och släp, och INTERLOCK viker undan för BETONGs kick. Slå på NAV i BETONG också. Grön prick = GLAPP hör BETONG."));
-    for (auto* c : std::initializer_list<juce::Component*> { &slap, &human, &tomrum, &provNiva, &folj, &interlock, &ilMode, &navBtn }) addAndMakeVisible (*c);
+    for (auto* c : std::initializer_list<juce::Component*> { &slap, &human, &tomrum, &provNiva, &folj, &interlock, &ilMode, &navBtn, &motorBtn }) addAndMakeVisible (*c);
 
     rensa.setTooltip (U ("Töm mönstret på valt spår."));
     rensa.onClick = [this] { proc.clearLane (selected); };
@@ -616,6 +618,7 @@ void GlappPanel::resized()
     }
     {
         navBtn.setBounds (grooveArea.getRight() - 54, grooveArea.getY() + 5, 46, 17);
+        motorBtn.setBounds (navBtn.getX() - 76, grooveArea.getY() + 5, 56, 17);
         auto g = grooveArea.reduced (10, 6).withTrimmedTop (20);
         auto knobs = g.removeFromLeft (174);
         for (auto* k : { &slap, &human, &tomrum }) k->setBounds (knobs.removeFromLeft (58).withSizeKeepingCentre (58, g.getHeight()));

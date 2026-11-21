@@ -121,5 +121,7 @@ inline constexpr Par kOrdlista[] =
     { "TRYCK", "PRESSURE" },
     { "MÖRKER", "DARKNESS" },
     { "tunga samplingar", "heavy samples" },
+    { "MOTOR", "ENGINE" },
+    { "MOTOR: följ motorn i BETONG (kräver NAV). Glest i introt och breaket, tätare i uppbyggnaden och fullt i droppet. Kicken rörs aldrig.", "ENGINE: follow the engine in BETONG (needs NAV). Sparse in the intro and the break, busier in the build-up and full in the drop. The kick is never touched." },
 };
 } // namespace sprak

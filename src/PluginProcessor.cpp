@@ -32,6 +32,7 @@ GlappProcessor::GlappProcessor()
     pSpela = apvts.getRawParameterValue ("spela");
     pTempo = apvts.getRawParameterValue ("tempo");
     pNav = apvts.getRawParameterValue ("nav");
+    pMotor = apvts.getRawParameterValue ("motor");
     pKey = apvts.getRawParameterValue ("tonart");
     pScale = apvts.getRawParameterValue ("skala");
     startTimerHz (5);
@@ -113,6 +114,23 @@ void GlappProcessor::readConfig (Engine& e) const
 }
 
 // ---------------------------------------------------------------- ljudtråden
+// MOTOR (kräver NAV): BETONG:s motor berättar var i låten vi är. GLAPP spelar glest i introt och
+// breaket (TOMRUM stryker slag, kicken rörs aldrig), tätare och mer mänskligt i uppbyggnaden
+// och fullt i droppet.
+void GlappProcessor::foljMotorn (Engine& e, int n)
+{
+    if (pNav->load() <= 0.5f || pMotor->load() <= 0.5f || ! navReady.load()) { navMotor.active = false; return; }
+    navMotor.update (nav, juce::Time::currentTimeMillis(), n / juce::jmax (1.0, sr));
+    if (! navMotor.active) return;
+    const auto& m = navMotor;
+    const float e01 = juce::jlimit (0.0f, 1.0f, m.energy);
+    float t = e.g.tomrum + 0.45f * (1.0f - e01) + 0.5f * m.brk - 0.3f * m.lift - 0.4f * m.drop;
+    if (m.fas == mh::FasIntro) t += 0.2f;
+    e.g.tomrum = juce::jlimit (0.0f, 0.95f, t);
+    e.g.human = juce::jlimit (0.0f, 2.0f, e.g.human + 0.4f * m.lift);
+    e.g.slap = juce::jlimit (0.0f, 2.0f, e.g.slap * (1.0f + 0.3f * m.brk));
+}
+
 void GlappProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
 {
     juce::ScopedNoDenormals noDenormals;
@@ -120,6 +138,7 @@ void GlappProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiB
     buffer.clear();
 
     readConfig (engine);
+    foljMotorn (engine, buffer.getNumSamples());
 
     // Tid: följ DAW:en när den spelar, annars den egna klockan (SPELA).
     double bpm = (double) pTempo->load();

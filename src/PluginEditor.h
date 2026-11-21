@@ -49,7 +49,7 @@ private:
     ParamCombo kit, tonart, skala;
     Knob muller, tryck, morker;
     juce::Rectangle<int> ljudArea;
-    ParamToggle folj { juce::String::fromUTF8 ("FÖLJ TEMPO") }, interlock { "INTERLOCK" }, navBtn { "NAV" };
+    ParamToggle folj { juce::String::fromUTF8 ("FÖLJ TEMPO") }, interlock { "INTERLOCK" }, navBtn { "NAV" }, motorBtn { "MOTOR" };
     int navShown = -1;
     ParamCombo ilMode;
 
